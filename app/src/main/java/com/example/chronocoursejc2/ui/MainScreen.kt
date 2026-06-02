@@ -2,7 +2,9 @@ package com.example.chronocoursejc2.ui
 
 import android.app.Activity
 import android.app.DownloadManager
+import android.content.Context
 import android.content.Intent
+import android.media.AudioManager
 import android.view.WindowManager
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -13,8 +15,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.BatteryFull
-import androidx.compose.material.icons.rounded.BrightnessHigh
-import androidx.compose.material.icons.rounded.BrightnessLow
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material3.*
@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -142,33 +143,48 @@ fun MainScreenContent(
             title = { Text("Course terminée") },
             text = {
                 Column {
-                    if (raceState == RaceState.STOPPED && arrivals.isNotEmpty()) {
-                        Text("Listing sauvegardé dans téléchargement.")
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(
-                                onClick = {
-                                    val intent = Intent(DownloadManager.ACTION_VIEW_DOWNLOADS)
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    context.startActivity(intent)
-                                },
-                                colors = ButtonDefaults.buttonColors(containerColor = customGray, contentColor = Color.White),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Text("ouvrir le dossier", style = MaterialTheme.typography.labelSmall)
-                            }
-                            Button(
-                                onClick = { showTextViewer = true },
-                                colors = ButtonDefaults.buttonColors(containerColor = customGray, contentColor = Color.White),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Text("ouvrir ici", style = MaterialTheme.typography.labelSmall)
-                            }
+                    Text("Listing sauvegardé dans téléchargement.")
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(
+                            onClick = {
+                                val intent = Intent(DownloadManager.ACTION_VIEW_DOWNLOADS)
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                context.startActivity(intent)
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = customGray, contentColor = Color.White),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("ouvrir le dossier", style = MaterialTheme.typography.labelSmall)
                         }
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = { showTextViewer = true },
+                            colors = ButtonDefaults.buttonColors(containerColor = customGray, contentColor = Color.White),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("ouvrir ici", style = MaterialTheme.typography.labelSmall)
+                        }
                     }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = {
+                            val sendIntent: Intent = Intent().apply {
+                                action = Intent.ACTION_SEND
+                                putExtra(Intent.EXTRA_TEXT, lastSavedFileContent)
+                                type = "text/plain"
+                            }
+                            val shareIntent = Intent.createChooser(sendIntent, null)
+                            context.startActivity(shareIntent)
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = customGray, contentColor = Color.White),
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                    ) {
+                        Text("partager", style = MaterialTheme.typography.labelSmall)
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
                     Text("Quitter ou relancer l'application ?", fontWeight = FontWeight.Bold)
                 }
             },
@@ -232,72 +248,81 @@ fun MainScreenContent(
         }
     }
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        topBar = {
-            TopBar(currentTime, batteryPercentage)
-        },
-        bottomBar = {
-            BottomButtons(
-                raceState = raceState,
-                onLeftClick = {
-                    val isInitial = raceState == RaceState.IDLE || raceState == RaceState.READY
-                    if (isInitial) {
-                        onTriggerStartAction()
-                    } else {
-                        onArrivalClick()
-                    }
-                },
-                onRightClick = {
-                    val isInitial = raceState == RaceState.IDLE || raceState == RaceState.READY
-                    if (isInitial) {
-                        // Brutal stop: no confirmation, show post-race dialog immediately
-                        forceShowPostRaceDialog = true
-                    } else {
-                        showStopDialog = true
-                    }
-                },
-                deepTealColor = customDeepTeal,
-                darkRedColor = customDarkRed
-            )
-        }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            TimingDisplay(raceState, remainingTime, elapsedTime)
-            
-            if (selectedProcedure != null && (raceState == RaceState.COUNTDOWN || raceState == RaceState.RUNNING)) {
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    val departureInfo = buildAnnotatedString {
-                        append("Course dont le départ est à ")
-                        withStyle(style = SpanStyle(fontSize = 18.sp, fontWeight = FontWeight.Black)) {
-                            append(plannedDepartureTimeLabel)
+    Box(modifier = Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(id = R.drawable.fond1),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = Color.Transparent,
+            topBar = {
+                TopBar(currentTime, batteryPercentage)
+            },
+            bottomBar = {
+                BottomButtons(
+                    raceState = raceState,
+                    onLeftClick = {
+                        val isInitial = raceState == RaceState.IDLE || raceState == RaceState.READY
+                        if (isInitial) {
+                            onTriggerStartAction()
+                        } else {
+                            onArrivalClick()
                         }
-                    }
-                    Text(
-                        text = departureInfo,
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Text(
-                        text = "(type ${selectedProcedure.label})",
-                        style = MaterialTheme.typography.bodySmall,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
-                    )
-                }
+                    },
+                    onRightClick = {
+                        val isInitial = raceState == RaceState.IDLE || raceState == RaceState.READY
+                        if (isInitial) {
+                            onStopAndSave() 
+                            forceShowPostRaceDialog = true
+                        } else {
+                            showStopDialog = true
+                        }
+                    },
+                    deepTealColor = customDeepTeal,
+                    darkRedColor = customDarkRed
+                )
             }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            ArrivalList(arrivals)
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                TimingDisplay(raceState, remainingTime, elapsedTime)
+                
+                if (selectedProcedure != null && (raceState == RaceState.COUNTDOWN || raceState == RaceState.RUNNING)) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        val departureInfo = buildAnnotatedString {
+                            append("Course dont le départ est à ")
+                            withStyle(style = SpanStyle(fontSize = 18.sp, fontWeight = FontWeight.Black)) {
+                                append(plannedDepartureTimeLabel)
+                            }
+                        }
+                        Text(
+                            text = departureInfo,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "(type ${selectedProcedure.label})",
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                ArrivalList(arrivals)
+            }
         }
     }
 }
@@ -321,83 +346,94 @@ fun ProcedureSelectionDialog(onProcedureSelected: (Procedure) -> Unit) {
                 color = MaterialTheme.colorScheme.surface,
                 tonalElevation = 6.dp
             ) {
-                Column(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState()),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = "Choix de la procédure de départ",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Image(
+                        painter = painterResource(id = R.drawable.fond1),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                        alpha = 0.5f
                     )
-                    Spacer(modifier = Modifier.height(24.dp))
-                    
-                    Row(
+                    Column(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(140.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .padding(16.dp)
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState()),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
                     ) {
-                        Button(
-                            onClick = { onProcedureSelected(Procedure.PROC_6510) },
+                        Text(
+                            text = "Choix de la procédure de départ",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                        
+                        Row(
                             modifier = Modifier
-                                .weight(1f)
-                                .fillMaxHeight(),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
-                            shape = MaterialTheme.shapes.extraLarge
+                                .fillMaxWidth()
+                                .height(90.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "6 5 1 0",
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Black,
-                                textAlign = TextAlign.Center
+                            ProcedureButton(
+                                procedure = Procedure.PROC_3210,
+                                color = Color(0xFF2196F3), // Blue
+                                onProcedureSelected = onProcedureSelected,
+                                modifier = Modifier.weight(1f)
+                            )
+                            ProcedureButton(
+                                procedure = Procedure.PROC_5410,
+                                color = Color(0xFF4CAF50), // Green
+                                onProcedureSelected = onProcedureSelected,
+                                modifier = Modifier.weight(1f)
                             )
                         }
-                        Button(
-                            onClick = { onProcedureSelected(Procedure.PROC_3210) },
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Row(
                             modifier = Modifier
-                                .weight(1f)
-                                .fillMaxHeight(),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3)),
-                            shape = MaterialTheme.shapes.extraLarge
+                                .fillMaxWidth()
+                                .height(90.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "3 2 1 0",
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Black,
-                                textAlign = TextAlign.Center
+                            ProcedureButton(
+                                procedure = Procedure.PROC_6410,
+                                color = Color(0xFFFF9800), // Orange
+                                onProcedureSelected = onProcedureSelected,
+                                modifier = Modifier.weight(1f)
+                            )
+                            ProcedureButton(
+                                procedure = Procedure.PROC_8410,
+                                color = Color(0xFFE91E63), // Pink/Red
+                                onProcedureSelected = onProcedureSelected,
+                                modifier = Modifier.weight(1f)
                             )
                         }
-                    }
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp),
-                        horizontalArrangement = Arrangement.Start,
-                        verticalAlignment = Alignment.Top
-                    ) {
-                        Button(
-                            onClick = { onProcedureSelected(Procedure.NONE) },
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Row(
                             modifier = Modifier
-                                .fillMaxWidth(0.48f)
-                                .fillMaxHeight(),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9C27B0)),
-                            shape = MaterialTheme.shapes.extraLarge
+                                .fillMaxWidth()
+                                .height(90.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "Sans compte à rebours",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center
+                            ProcedureButton(
+                                procedure = Procedure.PROC_10410,
+                                color = Color(0xFF00BCD4), // Teal/Cyan
+                                onProcedureSelected = onProcedureSelected,
+                                modifier = Modifier.weight(1f)
+                            )
+                            ProcedureButton(
+                                procedure = Procedure.NONE,
+                                color = Color(0xFF9C27B0),
+                                onProcedureSelected = onProcedureSelected,
+                                modifier = Modifier.weight(1f)
                             )
                         }
                     }
@@ -408,14 +444,51 @@ fun ProcedureSelectionDialog(onProcedureSelected: (Procedure) -> Unit) {
 }
 
 @Composable
+fun ProcedureButton(
+    procedure: Procedure,
+    color: Color,
+    onProcedureSelected: (Procedure) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Button(
+        onClick = { onProcedureSelected(procedure) },
+        modifier = modifier.fillMaxHeight(),
+        colors = ButtonDefaults.buttonColors(containerColor = color),
+        shape = MaterialTheme.shapes.extraLarge
+    ) {
+        Text(
+            text = procedure.label,
+            style = if (procedure == Procedure.NONE) MaterialTheme.typography.titleMedium else MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Black,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
 fun TopBar(currentTime: String, batteryPercentage: Int) {
     val context = LocalContext.current
+    val audioManager = remember { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
     
-    fun setBrightness(value: Float) {
+    var brightnessLevel by remember { mutableIntStateOf(100) }
+    var soundLevel by remember { mutableIntStateOf(3) }
+
+    fun setBrightness(level: Int) {
         val activity = context as? Activity ?: return
         val layoutParams: WindowManager.LayoutParams = activity.window.attributes
-        layoutParams.screenBrightness = value
+        layoutParams.screenBrightness = level / 100f
         activity.window.attributes = layoutParams
+    }
+
+    fun setSound(level: Int) {
+        val maxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_NOTIFICATION)
+        val vol = when(level) {
+            3 -> maxVol
+            2 -> (maxVol * 0.6).toInt()
+            1 -> (maxVol * 0.3).toInt()
+            else -> maxVol
+        }
+        audioManager.setStreamVolume(AudioManager.STREAM_NOTIFICATION, vol, 0)
     }
 
     Surface(
@@ -426,13 +499,13 @@ fun TopBar(currentTime: String, batteryPercentage: Int) {
         Row(
             modifier = Modifier
                 .windowInsetsPadding(WindowInsets.statusBars)
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(horizontal = 8.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Rounded.Schedule, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = currentTime,
                     style = MaterialTheme.typography.titleLarge,
@@ -440,47 +513,61 @@ fun TopBar(currentTime: String, batteryPercentage: Int) {
                 )
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Rounded.BatteryFull, contentDescription = null)
+                Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = "$batteryPercentage%",
                     style = MaterialTheme.typography.titleMedium
                 )
-                Spacer(modifier = Modifier.width(4.dp))
-                Icon(Icons.Rounded.BatteryFull, contentDescription = null)
                 
                 Spacer(modifier = Modifier.width(8.dp))
                 
-                // Brightness 50%
-                Surface(
-                    onClick = { setBrightness(0.5f) },
-                    shape = MaterialTheme.shapes.small,
-                    color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
-                    modifier = Modifier.size(width = 42.dp, height = 32.dp)
+                val lumIcon = when(brightnessLevel) {
+                    100 -> R.drawable.lum100
+                    50 -> R.drawable.lum050
+                    else -> R.drawable.lum020
+                }
+                IconButton(
+                    onClick = {
+                        brightnessLevel = when(brightnessLevel) {
+                            100 -> 50
+                            50 -> 20
+                            else -> 100
+                        }
+                        setBrightness(brightnessLevel)
+                    },
+                    modifier = Modifier.size(40.dp)
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            Icons.Rounded.BrightnessLow,
-                            contentDescription = "Éclairage faible",
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
+                    Image(
+                        painter = painterResource(id = lumIcon),
+                        contentDescription = "Luminosité $brightnessLevel%",
+                        modifier = Modifier.size(32.dp)
+                    )
                 }
                 
                 Spacer(modifier = Modifier.width(4.dp))
                 
-                // Brightness 100%
-                Surface(
-                    onClick = { setBrightness(1.0f) },
-                    shape = MaterialTheme.shapes.small,
-                    color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
-                    modifier = Modifier.size(width = 42.dp, height = 32.dp)
+                val soundIcon = when(soundLevel) {
+                    3 -> R.drawable.son3
+                    2 -> R.drawable.son2
+                    else -> R.drawable.son1
+                }
+                IconButton(
+                    onClick = {
+                        soundLevel = when(soundLevel) {
+                            3 -> 2
+                            2 -> 1
+                            else -> 3
+                        }
+                        setSound(soundLevel)
+                    },
+                    modifier = Modifier.size(40.dp)
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            Icons.Rounded.BrightnessHigh,
-                            contentDescription = "Éclairage fort",
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
+                    Image(
+                        painter = painterResource(id = soundIcon),
+                        contentDescription = "Volume niveau $soundLevel",
+                        modifier = Modifier.size(32.dp)
+                    )
                 }
 
                 Spacer(modifier = Modifier.width(8.dp))
@@ -501,7 +588,7 @@ fun TimingDisplay(raceState: RaceState, remainingTime: Long, elapsedTime: Long) 
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.8f),
             contentColor = MaterialTheme.colorScheme.onSecondaryContainer
         )
     ) {
@@ -607,7 +694,7 @@ fun ArrivalRow(arrival: Arrival) {
             style = textStyle,
             maxLines = 1
         )
-        Spacer(modifier = Modifier.width(28.dp)) // Shifted right by ~2 chars
+        Spacer(modifier = Modifier.width(28.dp))
         Text(
             text = arrival.arrivalTime,
             modifier = Modifier.width(85.dp),
@@ -626,7 +713,6 @@ fun BottomButtons(
     darkRedColor: Color
 ) {
     val isInitial = raceState == RaceState.IDLE || raceState == RaceState.READY
-    val isRunning = raceState == RaceState.RUNNING || raceState == RaceState.COUNTDOWN
     val isArrivalActive = raceState == RaceState.RUNNING
 
     Surface(
@@ -640,7 +726,6 @@ fun BottomButtons(
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // LEFT BUTTON: Démarrer or Arrivée
             Button(
                 onClick = onLeftClick,
                 modifier = Modifier
@@ -671,7 +756,6 @@ fun BottomButtons(
                 }
             }
 
-            // RIGHT BUTTON: Arrêter
             Button(
                 onClick = onRightClick,
                 modifier = Modifier
@@ -703,9 +787,9 @@ fun MainScreenSmallPreview() {
             elapsedTime = 605,
             showProcedureDialog = false,
             showPostRaceDialog = false,
-            selectedProcedure = Procedure.PROC_6510,
+            selectedProcedure = Procedure.PROC_6410,
             plannedDepartureTimeLabel = "10:30:00",
-            lastSavedFileContent = "",
+            lastSavedFileContent = "ApplicationChronocoursejc2\n...",
             onProcedureSelected = {},
             onStopAndSave = {},
             onResetRace = {},

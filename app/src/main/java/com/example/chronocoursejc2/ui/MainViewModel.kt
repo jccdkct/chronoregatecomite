@@ -31,10 +31,13 @@ enum class RaceState {
     IDLE, READY, COUNTDOWN, RUNNING, STOPPED
 }
 
-enum class Procedure(val seconds: Long, val label: String) {
-    PROC_6510(360, "6 5 1 0"),
-    PROC_3210(180, "3 2 1 0"),
-    NONE(0, "Sans compte à rebours")
+enum class Procedure(val totalSeconds: Long, val milestones: List<Long>, val label: String) {
+    PROC_3210(180, listOf(120, 60, 0), "3 2 1 0"),
+    PROC_5410(300, listOf(240, 60, 0), "5 4 1 0"),
+    PROC_6410(360, listOf(240, 60, 0), "6 4 1 0"),
+    PROC_8410(480, listOf(240, 60, 0), "8 4 1 0"),
+    PROC_10410(600, listOf(240, 60, 0), "10 4 1 0"),
+    NONE(0, emptyList(), "Sans compte à rebours")
 }
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -108,9 +111,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _selectedProcedure.value = procedure
         _showProcedureDialog.value = false
         _raceState.value = RaceState.READY
-        _remainingTime.value = procedure.seconds
+        _remainingTime.value = procedure.totalSeconds
         
-        val estDeparture = System.currentTimeMillis() + (procedure.seconds * 1000)
+        val estDeparture = System.currentTimeMillis() + (procedure.totalSeconds * 1000)
         _plannedDepartureTimeLabel.value = formatTimeFull(Date(estDeparture))
     }
 
@@ -144,7 +147,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         _raceState.value = RaceState.COUNTDOWN
-        departureTime = System.currentTimeMillis() + (procedure.seconds * 1000)
+        departureTime = System.currentTimeMillis() + (procedure.totalSeconds * 1000)
         _plannedDepartureTimeLabel.value = formatTimeFull(Date(departureTime))
 
         raceJob = viewModelScope.launch {
@@ -171,8 +174,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun checkBeep(secondsLeft: Long) {
-        val isBeep = (secondsLeft in 300..312) || (secondsLeft in 60..72) || (secondsLeft in 0..12) ||
-                     (secondsLeft in 120..132 && (_selectedProcedure.value?.seconds ?: 0) <= 180)
+        val procedure = _selectedProcedure.value ?: return
+        val isBeep = procedure.milestones.any { milestone ->
+            secondsLeft in milestone..(milestone + 12)
+        }
         
         if (isBeep) {
             playBeep()

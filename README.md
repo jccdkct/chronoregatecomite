@@ -4,7 +4,7 @@ Chronocoursejc2 est une application de chronométrage de haute précision spéci
 
 ## Fonctionnalités pour les Régates
 
-*   **Procédures de Départ Normalisées :** Supporte les séquences de compte à rebours "6 5 1 0" et "3 2 1 0" avec bips sonores synchronisés pour signaler les étapes clés du départ.
+*   **Procédures de Départ Normalisées :** Supporte les séquences de compte à rebours "3 2 1 0", "5 4 1 0", "6 4 1 0", "8 4 1 0" et "10 4 1 0" avec bips sonores synchronisés pour signaler les étapes clés du départ.
 *   **Enregistrement des Arrivées :** Capture instantanée de l'heure d'arrivée (au dixième de seconde) via le bouton à l'écran ou la touche physique **Volume Bas**, idéale pour garder les yeux sur la ligne d'arrivée.
 *   **Tableau de Bord en Temps Réel :** Affichage persistant de l'heure actuelle, du pourcentage de batterie et du statut de la course (compte à rebours ou chronomètre depuis le départ).
 *   **Exportation des Résultats :** Génération automatique d'un fichier texte formaté dans le dossier `Téléchargements` pour une transmission rapide des résultats.
