@@ -26,31 +26,31 @@ Ce projet est sous licence **MIT**. Voir le fichier [LICENSE](LICENSE) pour plus
 
 ## Captures d'écran
 
-![Screenshot_20260602_225313-2](screenshots/Screenshot_20260602_225313-2.png)
-![Screenshot_20260602_225313](screenshots/Screenshot_20260602_225313.png)
-![Screenshot_20260602_225348](screenshots/Screenshot_20260602_225348.png)
-![Screenshot_20260602_225357](screenshots/Screenshot_20260602_225357.png)
-![Screenshot_20260602_225545](screenshots/Screenshot_20260602_225545.png)
-![Screenshot_20260602_225659](screenshots/Screenshot_20260602_225659.png)
-![Screenshot_20260602_230030](screenshots/Screenshot_20260602_230030.png)
-![Screenshot_20260602_230133](screenshots/Screenshot_20260602_230133.png)
-![Screenshot_20260602_230140](screenshots/Screenshot_20260602_230140.png)
-![Screenshot_20260602_230145](screenshots/Screenshot_20260602_230145.png)
-![Screenshot_20260602_230149](screenshots/Screenshot_20260602_230149.png)
-![Screenshot_20260602_230155](screenshots/Screenshot_20260602_230155.png)
-![Screenshot_20260602_230217--1](screenshots/Screenshot_20260602_230217--1.png)
-![Screenshot_20260602_230221](screenshots/Screenshot_20260602_230221.png)
-![Screenshot_20260602_230230](screenshots/Screenshot_20260602_230230.png)
-![Screenshot_20260602_230238](screenshots/Screenshot_20260602_230238.png)
-![Screenshot_20260602_233253_Firefox_installation__1ere](screenshots/Screenshot_20260602_233253_Firefox_installation__1ere.jpg)
-![Screenshot_20260602_233306_Firefox](screenshots/Screenshot_20260602_233306_Firefox.jpg)
-![Screenshot_20260602_233320_Firefox](screenshots/Screenshot_20260602_233320_Firefox.jpg)
-![Screenshot_20260602_233332_Firefox](screenshots/Screenshot_20260602_233332_Firefox.jpg)
-![Screenshot_20260602_233343_Firefox](screenshots/Screenshot_20260602_233343_Firefox.jpg)
-![Screenshot_20260602_233346_Firefox](screenshots/Screenshot_20260602_233346_Firefox.jpg)
-![Screenshot_20260602_233353_Package installer](screenshots/Screenshot_20260602_233353_Package%20installer.jpg)
-![Screenshot_20260602_233401_Package installer](screenshots/Screenshot_20260602_233401_Package%20installer.jpg)
-![Screenshot_20260602_233409_Google Play Store](screenshots/Screenshot_20260602_233409_Google%20Play%20Store.jpg)
-![Screenshot_20260602_233415_Google Play Store](screenshots/Screenshot_20260602_233415_Google%20Play%20Store.jpg)
-![Screenshot_20260602_233430_Package installer](screenshots/Screenshot_20260602_233430_Package%20installer.jpg)
-![Screenshot_20260602_233437_Package installer_derniere](screenshots/Screenshot_20260602_233437_Package%20installer_derniere.jpg)
+<img src="screenshots/Screenshot_20260602_225313-2.png" width="50%" />
+<img src="screenshots/Screenshot_20260602_225313.png" width="50%" />
+<img src="screenshots/Screenshot_20260602_225348.png" width="50%" />
+<img src="screenshots/Screenshot_20260602_225357.png" width="50%" />
+<img src="screenshots/Screenshot_20260602_225545.png" width="50%" />
+<img src="screenshots/Screenshot_20260602_225659.png" width="50%" />
+<img src="screenshots/Screenshot_20260602_230030.png" width="50%" />
+<img src="screenshots/Screenshot_20260602_230133.png" width="50%" />
+<img src="screenshots/Screenshot_20260602_230140.png" width="50%" />
+<img src="screenshots/Screenshot_20260602_230145.png" width="50%" />
+<img src="screenshots/Screenshot_20260602_230149.png" width="50%" />
+<img src="screenshots/Screenshot_20260602_230155.png" width="50%" />
+<img src="screenshots/Screenshot_20260602_230217--1.png" width="50%" />
+<img src="screenshots/Screenshot_20260602_230221.png" width="50%" />
+<img src="screenshots/Screenshot_20260602_230230.png" width="50%" />
+<img src="screenshots/Screenshot_20260602_230238.png" width="50%" />
+<img src="screenshots/Screenshot_20260602_233253_Firefox_installation__1ere.jpg" width="50%" />
+<img src="screenshots/Screenshot_20260602_233306_Firefox.jpg" width="50%" />
+<img src="screenshots/Screenshot_20260602_233320_Firefox.jpg" width="50%" />
+<img src="screenshots/Screenshot_20260602_233332_Firefox.jpg" width="50%" />
+<img src="screenshots/Screenshot_20260602_233343_Firefox.jpg" width="50%" />
+<img src="screenshots/Screenshot_20260602_233346_Firefox.jpg" width="50%" />
+<img src="screenshots/Screenshot_20260602_233353_Package%20installer.jpg" width="50%" />
+<img src="screenshots/Screenshot_20260602_233401_Package%20installer.jpg" width="50%" />
+<img src="screenshots/Screenshot_20260602_233409_Google%20Play%20Store.jpg" width="50%" />
+<img src="screenshots/Screenshot_20260602_233415_Google%20Play%20Store.jpg" width="50%" />
+<img src="screenshots/Screenshot_20260602_233430_Package%20installer.jpg" width="50%" />
+<img src="screenshots/Screenshot_20260602_233437_Package%20installer_derniere.jpg" width="50%" />
