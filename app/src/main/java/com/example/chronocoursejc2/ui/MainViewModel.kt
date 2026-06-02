@@ -100,14 +100,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         application.registerReceiver(batteryReceiver, filter)
     }
 
-    private fun formatTimeFull(time: Date, includeTenths: Boolean = false): String {
-        val baseFormat = SimpleDateFormat("HH 'h' mm 'min' ss", Locale.getDefault()).format(time)
-        return if (includeTenths) {
-            val tenths = (time.time % 1000) / 100
-            "$baseFormat,$tenths s"
-        } else {
-            "$baseFormat s"
-        }
+    private fun formatTimeFull(time: Date): String {
+        return SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(time)
     }
 
     fun selectProcedure(procedure: Procedure) {
@@ -117,7 +111,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _remainingTime.value = procedure.seconds
         
         val estDeparture = System.currentTimeMillis() + (procedure.seconds * 1000)
-        _plannedDepartureTimeLabel.value = formatTimeFull(Date(estDeparture), includeTenths = true)
+        _plannedDepartureTimeLabel.value = formatTimeFull(Date(estDeparture))
     }
 
     fun triggerStartAction() {
@@ -136,7 +130,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (procedure == Procedure.NONE) {
             _raceState.value = RaceState.RUNNING
             startTime = System.currentTimeMillis()
-            startFormattedTime = formatTimeFull(Date(startTime), includeTenths = true)
+            startFormattedTime = formatTimeFull(Date(startTime))
             _plannedDepartureTimeLabel.value = startFormattedTime
             
             raceJob = viewModelScope.launch {
@@ -151,7 +145,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
         _raceState.value = RaceState.COUNTDOWN
         departureTime = System.currentTimeMillis() + (procedure.seconds * 1000)
-        _plannedDepartureTimeLabel.value = formatTimeFull(Date(departureTime), includeTenths = true)
+        _plannedDepartureTimeLabel.value = formatTimeFull(Date(departureTime))
 
         raceJob = viewModelScope.launch {
             while (_remainingTime.value > 0) {
@@ -166,7 +160,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             
             _raceState.value = RaceState.RUNNING
             startTime = departureTime
-            startFormattedTime = formatTimeFull(Date(startTime), includeTenths = true)
+            startFormattedTime = formatTimeFull(Date(startTime))
             
             while (_raceState.value == RaceState.RUNNING) {
                 val now = System.currentTimeMillis()
@@ -196,7 +190,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         
         val now = System.currentTimeMillis()
         val durationMillis = now - startTime
-        val arrivalTime = formatTimeFull(Date(now), includeTenths = true)
+        val arrivalTime = formatTimeFull(Date(now))
         val rank = _arrivals.value.size + 1
         
         val newArrival = Arrival(
@@ -222,10 +216,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 append("ApplicationChronocoursejc2\n")
                 val startDateStr = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date(startTime))
                 append("Arrivees de la course dont le depart a eu lieu\n")
-                append("le $startDateStr a $startFormattedTime\n")
-                append(String.format(Locale.getDefault(), "%-6s %-25s %-25s\n", "Rang", "Duree", "Heure arrivee"))
+                append("le $startDateStr à $startFormattedTime\n")
+                append(String.format(Locale.getDefault(), "%-6s  %-12s  %-12s\n", "Rang", "Duree", "Heure"))
                 _arrivals.value.sortedBy { it.rank }.forEach { arrival ->
-                    append(String.format(Locale.getDefault(), "%03d    %-25s %-25s\n", arrival.rank, arrival.duration, arrival.arrivalTime))
+                    append(String.format(Locale.getDefault(), "%03d   %-12s  %-12s\n", arrival.rank, arrival.duration, arrival.arrivalTime))
                 }
             }
             _lastSavedFileContent.value = content
@@ -267,8 +261,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val h = totalSeconds / 3600
         val m = (totalSeconds % 3600) / 60
         val s = totalSeconds % 60
-        val tenths = (millis % 1000) / 100
-        return String.format(Locale.getDefault(), "%02d h %02d m %02d,%1d s", h, m, s, tenths)
+        return String.format(Locale.getDefault(), "%02d:%02d:%02d", h, m, s)
     }
 
     private fun getCurrentFormattedTime(): String {

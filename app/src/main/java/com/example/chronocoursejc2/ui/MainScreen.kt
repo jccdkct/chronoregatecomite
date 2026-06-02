@@ -42,7 +42,6 @@ import java.util.Locale
 fun MainScreen(
     viewModel: MainViewModel = viewModel()
 ) {
-    val context = LocalContext.current
     val currentTime by viewModel.currentTime.collectAsStateWithLifecycle()
     val batteryPercentage by viewModel.batteryPercentage.collectAsStateWithLifecycle()
     val arrivals by viewModel.arrivals.collectAsStateWithLifecycle()
@@ -55,6 +54,46 @@ fun MainScreen(
     val plannedDepartureTimeLabel by viewModel.plannedDepartureTimeLabel.collectAsStateWithLifecycle()
     val lastSavedFileContent by viewModel.lastSavedFileContent.collectAsStateWithLifecycle()
 
+    MainScreenContent(
+        currentTime = currentTime,
+        batteryPercentage = batteryPercentage,
+        arrivals = arrivals,
+        raceState = raceState,
+        remainingTime = remainingTime,
+        elapsedTime = elapsedTime,
+        showProcedureDialog = showProcedureDialog,
+        showPostRaceDialog = showPostRaceDialog,
+        selectedProcedure = selectedProcedure,
+        plannedDepartureTimeLabel = plannedDepartureTimeLabel,
+        lastSavedFileContent = lastSavedFileContent,
+        onProcedureSelected = { viewModel.selectProcedure(it) },
+        onStopAndSave = { viewModel.stopAndSave() },
+        onResetRace = { viewModel.resetRace() },
+        onArrivalClick = { viewModel.recordArrival() },
+        onTriggerStartAction = { viewModel.triggerStartAction() }
+    )
+}
+
+@Composable
+fun MainScreenContent(
+    currentTime: String,
+    batteryPercentage: Int,
+    arrivals: List<Arrival>,
+    raceState: RaceState,
+    remainingTime: Long,
+    elapsedTime: Long,
+    showProcedureDialog: Boolean,
+    showPostRaceDialog: Boolean,
+    selectedProcedure: Procedure?,
+    plannedDepartureTimeLabel: String,
+    lastSavedFileContent: String,
+    onProcedureSelected: (Procedure) -> Unit,
+    onStopAndSave: () -> Unit,
+    onResetRace: () -> Unit,
+    onArrivalClick: () -> Unit,
+    onTriggerStartAction: () -> Unit
+) {
+    val context = LocalContext.current
     var showStopDialog by remember { mutableStateOf(false) }
     var showTextViewer by remember { mutableStateOf(false) }
 
@@ -63,9 +102,7 @@ fun MainScreen(
     val customGray = Color(0xFF909090)
 
     if (showProcedureDialog) {
-        ProcedureSelectionDialog(
-            onProcedureSelected = { viewModel.selectProcedure(it) }
-        )
+        ProcedureSelectionDialog(onProcedureSelected = onProcedureSelected)
     }
 
     if (showStopDialog) {
@@ -76,7 +113,7 @@ fun MainScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        viewModel.stopAndSave()
+                        onStopAndSave()
                         showStopDialog = false
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = customDarkRed, contentColor = Color.White)
@@ -140,7 +177,7 @@ fun MainScreen(
             },
             dismissButton = {
                 Button(
-                    onClick = { viewModel.resetRace() },
+                    onClick = { onResetRace() },
                     colors = ButtonDefaults.buttonColors(containerColor = customDeepTeal, contentColor = Color.White),
                     shape = MaterialTheme.shapes.medium
                 ) {
@@ -194,10 +231,10 @@ fun MainScreen(
         bottomBar = {
             BottomButtons(
                 raceState = raceState,
-                onArrivalClick = { viewModel.recordArrival() },
+                onArrivalClick = onArrivalClick,
                 onStartStopClick = {
                     if (raceState == RaceState.READY || raceState == RaceState.IDLE) {
-                        viewModel.triggerStartAction()
+                        onTriggerStartAction()
                     } else if (raceState == RaceState.RUNNING || raceState == RaceState.COUNTDOWN) {
                         showStopDialog = true
                     }
@@ -233,7 +270,7 @@ fun MainScreen(
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = "(type ${selectedProcedure?.label})",
+                        text = "(type ${selectedProcedure.label})",
                         style = MaterialTheme.typography.bodySmall,
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
@@ -268,37 +305,38 @@ fun ProcedureSelectionDialog(onProcedureSelected: (Procedure) -> Unit) {
             ) {
                 Column(
                     modifier = Modifier
-                        .padding(24.dp)
-                        .fillMaxSize(),
+                        .padding(16.dp)
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(
                         text = "Choix de la procédure de départ",
-                        style = MaterialTheme.typography.headlineLarge,
+                        style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center
                     )
-                    Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
                     
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .weight(1f),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            .height(140.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Button(
                             onClick = { onProcedureSelected(Procedure.PROC_6510) },
                             modifier = Modifier
                                 .weight(1f)
-                                .fillMaxHeight(0.5f),
+                                .fillMaxHeight(),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
                             shape = MaterialTheme.shapes.extraLarge
                         ) {
                             Text(
                                 text = "6 5 1 0",
-                                style = MaterialTheme.typography.headlineMedium,
+                                style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Black,
                                 textAlign = TextAlign.Center
                             )
@@ -307,13 +345,13 @@ fun ProcedureSelectionDialog(onProcedureSelected: (Procedure) -> Unit) {
                             onClick = { onProcedureSelected(Procedure.PROC_3210) },
                             modifier = Modifier
                                 .weight(1f)
-                                .fillMaxHeight(0.5f),
+                                .fillMaxHeight(),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3)),
                             shape = MaterialTheme.shapes.extraLarge
                         ) {
                             Text(
                                 text = "3 2 1 0",
-                                style = MaterialTheme.typography.headlineMedium,
+                                style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Black,
                                 textAlign = TextAlign.Center
                             )
@@ -325,7 +363,7 @@ fun ProcedureSelectionDialog(onProcedureSelected: (Procedure) -> Unit) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .weight(1f),
+                            .height(100.dp),
                         horizontalArrangement = Arrangement.Start,
                         verticalAlignment = Alignment.Top
                     ) {
@@ -333,16 +371,15 @@ fun ProcedureSelectionDialog(onProcedureSelected: (Procedure) -> Unit) {
                             onClick = { onProcedureSelected(Procedure.NONE) },
                             modifier = Modifier
                                 .fillMaxWidth(0.48f)
-                                .fillMaxHeight(0.5f),
+                                .fillMaxHeight(),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9C27B0)),
                             shape = MaterialTheme.shapes.extraLarge
                         ) {
                             Text(
                                 text = "Sans compte à rebours",
-                                style = MaterialTheme.typography.titleLarge,
+                                style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                                lineHeight = 28.sp
+                                textAlign = TextAlign.Center
                             )
                         }
                     }
@@ -406,13 +443,13 @@ fun TimingDisplay(raceState: RaceState, remainingTime: Long, elapsedTime: Long) 
     ) {
         Row(
             modifier = Modifier
-                .padding(16.dp)
+                .padding(horizontal = 8.dp, vertical = 12.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
             val (mainText, subText) = when (raceState) {
-                RaceState.IDLE -> "00 h 00 m 00 s" to "En attente"
+                RaceState.IDLE -> "00:00:00" to "En attente"
                 RaceState.READY -> formatTime(remainingTime) to "Prêt au départ"
                 RaceState.COUNTDOWN -> formatTime(remainingTime) to "avant le départ"
                 RaceState.RUNNING -> formatTime(elapsedTime) to "depuis le départ"
@@ -421,13 +458,17 @@ fun TimingDisplay(raceState: RaceState, remainingTime: Long, elapsedTime: Long) 
             
             Text(
                 text = mainText,
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Black
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Black,
+                maxLines = 1
             )
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = subText,
-                style = MaterialTheme.typography.titleSmall
+                style = MaterialTheme.typography.labelSmall,
+                maxLines = 2,
+                lineHeight = 12.sp,
+                modifier = Modifier.weight(1f, fill = false)
             )
         }
     }
@@ -437,7 +478,7 @@ private fun formatTime(seconds: Long): String {
     val h = seconds / 3600
     val m = (seconds % 3600) / 60
     val s = seconds % 60
-    return String.format(Locale.getDefault(), "%02d h %02d m %02d s", h, m, s)
+    return String.format(Locale.getDefault(), "%02d:%02d:%02d", h, m, s)
 }
 
 @Composable
@@ -454,18 +495,20 @@ fun ArrivalList(arrivals: List<Arrival>) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(vertical = 4.dp),
+            horizontalArrangement = Arrangement.Start
         ) {
-            Text("Rang", fontWeight = FontWeight.Bold, modifier = Modifier.weight(0.4f))
-            Text("Durée", fontWeight = FontWeight.Bold, modifier = Modifier.weight(1.3f))
-            Text("Heure", fontWeight = FontWeight.Bold, modifier = Modifier.weight(1.3f))
+            Text("Rang", fontWeight = FontWeight.Bold, modifier = Modifier.width(36.dp), style = MaterialTheme.typography.labelSmall)
+            Spacer(modifier = Modifier.width(8.dp)) // About two spaces
+            Text("Duree", fontWeight = FontWeight.Bold, modifier = Modifier.width(68.dp), style = MaterialTheme.typography.labelSmall)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Heure", fontWeight = FontWeight.Bold, modifier = Modifier.width(68.dp), style = MaterialTheme.typography.labelSmall)
         }
         HorizontalDivider()
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(vertical = 8.dp)
+            contentPadding = PaddingValues(vertical = 4.dp)
         ) {
             items(arrivals) { arrival ->
                 ArrivalRow(arrival)
@@ -479,12 +522,27 @@ fun ArrivalRow(arrival: Arrival) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = String.format(Locale.getDefault(), "%03d", arrival.rank), modifier = Modifier.weight(0.4f))
-        Text(text = arrival.duration, modifier = Modifier.weight(1.3f))
-        Text(text = arrival.arrivalTime, modifier = Modifier.weight(1.3f))
+        Text(
+            text = String.format(Locale.getDefault(), "%03d", arrival.rank),
+            modifier = Modifier.width(36.dp),
+            style = MaterialTheme.typography.bodySmall.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = arrival.duration,
+            modifier = Modifier.width(68.dp),
+            style = MaterialTheme.typography.bodySmall.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = arrival.arrivalTime,
+            modifier = Modifier.width(68.dp),
+            style = MaterialTheme.typography.bodySmall.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
+        )
     }
 }
 
@@ -511,7 +569,7 @@ fun BottomButtons(
             Button(
                 onClick = onArrivalClick,
                 modifier = Modifier
-                    .weight(1f)
+                    .weight(1.15f)
                     .height(80.dp),
                 shape = MaterialTheme.shapes.medium,
                 enabled = isArrivalActive,
@@ -531,7 +589,7 @@ fun BottomButtons(
             FilledTonalButton(
                 onClick = onStartStopClick,
                 modifier = Modifier
-                    .weight(1f)
+                    .weight(0.85f)
                     .height(80.dp),
                 shape = MaterialTheme.shapes.medium,
                 colors = if (isRunning) {
@@ -551,10 +609,27 @@ fun BottomButtons(
     }
 }
 
-@Preview(showBackground = true, device = "spec:width=411dp,height=891dp,navigation=buttons")
+@Preview(showBackground = true, device = "spec:width=360dp,height=740dp,dpi=311")
 @Composable
-fun MainScreenPreview() {
+fun MainScreenSmallPreview() {
     Chronocoursejc2Theme {
-        MainScreen()
+        MainScreenContent(
+            currentTime = "10:30:00",
+            batteryPercentage = 85,
+            arrivals = listOf(Arrival(1, "00:10:05", "10:40:05")),
+            raceState = RaceState.RUNNING,
+            remainingTime = 0,
+            elapsedTime = 605,
+            showProcedureDialog = false,
+            showPostRaceDialog = false,
+            selectedProcedure = Procedure.PROC_6510,
+            plannedDepartureTimeLabel = "10:30:00",
+            lastSavedFileContent = "",
+            onProcedureSelected = {},
+            onStopAndSave = {},
+            onResetRace = {},
+            onArrivalClick = {},
+            onTriggerStartAction = {}
+        )
     }
 }
