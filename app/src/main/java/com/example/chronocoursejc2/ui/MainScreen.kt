@@ -263,75 +263,79 @@ fun MainScreenContent(
             TopBar(currentTime, batteryPercentage)
         },
         bottomBar = {
-            Column {
-                // FOOTER IMAGE: Placed just above the buttons, full width
-                Image(
-                    painter = painterResource(id = R.drawable.fond3),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxWidth(),
-                    contentScale = ContentScale.FillWidth
-                )
-                BottomButtons(
-                    raceState = raceState,
-                    onLeftClick = {
-                        val isInitial = raceState == RaceState.IDLE || raceState == RaceState.READY
-                        if (isInitial) {
-                            onTriggerStartAction()
-                        } else {
-                            onArrivalClick()
-                        }
-                    },
-                    onRightClick = {
-                        val isInitial = raceState == RaceState.IDLE || raceState == RaceState.READY
-                        if (isInitial) {
-                            onStopAndSave() 
-                            forceShowPostRaceDialog = true
-                        } else {
-                            showStopDialog = true
-                        }
-                    },
-                    deepTealColor = customDeepTeal,
-                    darkRedColor = customDarkRed
-                )
-            }
+            BottomButtons(
+                raceState = raceState,
+                onLeftClick = {
+                    val isInitial = raceState == RaceState.IDLE || raceState == RaceState.READY
+                    if (isInitial) {
+                        onTriggerStartAction()
+                    } else {
+                        onArrivalClick()
+                    }
+                },
+                onRightClick = {
+                    val isInitial = raceState == RaceState.IDLE || raceState == RaceState.READY
+                    if (isInitial) {
+                        onStopAndSave() 
+                        forceShowPostRaceDialog = true
+                    } else {
+                        showStopDialog = true
+                    }
+                },
+                deepTealColor = customDeepTeal,
+                darkRedColor = customDarkRed
+            )
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            TimingDisplay(raceState, remainingTime, elapsedTime)
+        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+            // FOOTER IMAGE: Single instance, aligned at the bottom of the screen area
+            Image(
+                painter = painterResource(id = R.drawable.fond3),
+                contentDescription = null,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth(),
+                contentScale = ContentScale.FillWidth,
+                alpha = 0.5f // Semi-transparent so text is readable over it
+            )
             
-            if (selectedProcedure != null && (raceState == RaceState.COUNTDOWN || raceState == RaceState.RUNNING)) {
-                Spacer(modifier = Modifier.height(12.dp))
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                TimingDisplay(raceState, remainingTime, elapsedTime)
                 
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    val departureInfo = buildAnnotatedString {
-                        append("Course dont le départ est à ")
-                        withStyle(style = SpanStyle(fontSize = 18.sp, fontWeight = FontWeight.Black)) {
-                            append(plannedDepartureTimeLabel)
+                if (selectedProcedure != null && (raceState == RaceState.COUNTDOWN || raceState == RaceState.RUNNING)) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        val departureInfo = buildAnnotatedString {
+                            append("Course dont le départ est à ")
+                            withStyle(style = SpanStyle(fontSize = 18.sp, fontWeight = FontWeight.Black)) {
+                                append(plannedDepartureTimeLabel)
+                            }
                         }
+                        Text(
+                            text = departureInfo,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "(type ${selectedProcedure.label})",
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                        )
                     }
-                    Text(
-                        text = departureInfo,
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Text(
-                        text = "(type ${selectedProcedure.label})",
-                        style = MaterialTheme.typography.bodySmall,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
-                    )
                 }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                // The list now has weight(1f), expanding to cover the image
+                ArrivalList(arrivals, modifier = Modifier.weight(1f))
             }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            ArrivalList(arrivals)
         }
     }
 }
@@ -349,7 +353,7 @@ fun ProcedureSelectionDialog(onProcedureSelected: (Procedure) -> Unit) {
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.85f)
+                    .fillMaxHeight(0.9f) // Increased slightly
                     .padding(16.dp),
                 shape = MaterialTheme.shapes.extraLarge,
                 color = MaterialTheme.colorScheme.surface,
@@ -363,112 +367,135 @@ fun ProcedureSelectionDialog(onProcedureSelected: (Procedure) -> Unit) {
                         contentScale = ContentScale.Crop,
                         alpha = 0.5f
                     )
-                    Column(
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState()),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = "Choix du compte à rebours (minutes)",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center
-                        )
-                        Spacer(modifier = Modifier.height(24.dp))
-                        
-                        Row(
+                        Column(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .height(90.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                                .padding(8.dp)
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState()),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Top // Start from top for better small screen fit
                         ) {
-                            ProcedureButton(
-                                procedure = Procedure.PROC_10,
-                                color = Color(0xFFFF5722), // Deep Orange
-                                onProcedureSelected = onProcedureSelected,
-                                modifier = Modifier.weight(1f)
+                            Text(
+                                text = "Choix du compte à rebours (minutes)",
+                                style = MaterialTheme.typography.titleMedium, // Smaller title
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center
                             )
-                            ProcedureButton(
-                                procedure = Procedure.PROC_210,
-                                color = Color(0xFF673AB7), // Deep Purple
-                                onProcedureSelected = onProcedureSelected,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
+                            Spacer(modifier = Modifier.height(16.dp))
+                            
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(64.dp), // Reduced height further
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                ProcedureButton(
+                                    procedure = Procedure.PROC_10,
+                                    color = Color(0xFFFF5722),
+                                    onProcedureSelected = onProcedureSelected,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                ProcedureButton(
+                                    procedure = Procedure.PROC_210,
+                                    color = Color(0xFF673AB7),
+                                    onProcedureSelected = onProcedureSelected,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(6.dp))
 
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(90.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            ProcedureButton(
-                                procedure = Procedure.PROC_3210,
-                                color = Color(0xFF2196F3), // Blue
-                                onProcedureSelected = onProcedureSelected,
-                                modifier = Modifier.weight(1f)
-                            )
-                            ProcedureButton(
-                                procedure = Procedure.PROC_5410,
-                                color = Color(0xFF4CAF50), // Green
-                                onProcedureSelected = onProcedureSelected,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                        
-                        Spacer(modifier = Modifier.height(12.dp))
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(64.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                ProcedureButton(
+                                    procedure = Procedure.PROC_3210,
+                                    color = Color(0xFF2196F3),
+                                    onProcedureSelected = onProcedureSelected,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                ProcedureButton(
+                                    procedure = Procedure.PROC_5410,
+                                    color = Color(0xFF4CAF50),
+                                    onProcedureSelected = onProcedureSelected,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            
+                            Spacer(modifier = Modifier.height(6.dp))
 
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(90.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            ProcedureButton(
-                                procedure = Procedure.PROC_6410,
-                                color = Color(0xFFFF9800), // Orange
-                                onProcedureSelected = onProcedureSelected,
-                                modifier = Modifier.weight(1f)
-                            )
-                            ProcedureButton(
-                                procedure = Procedure.PROC_8410,
-                                color = Color(0xFFE91E63), // Pink/Red
-                                onProcedureSelected = onProcedureSelected,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                        
-                        Spacer(modifier = Modifier.height(12.dp))
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(64.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                ProcedureButton(
+                                    procedure = Procedure.PROC_6410,
+                                    color = Color(0xFFFF9800),
+                                    onProcedureSelected = onProcedureSelected,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                ProcedureButton(
+                                    procedure = Procedure.PROC_8410,
+                                    color = Color(0xFFE91E63),
+                                    onProcedureSelected = onProcedureSelected,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            
+                            Spacer(modifier = Modifier.height(6.dp))
 
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(90.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            ProcedureButton(
-                                procedure = Procedure.PROC_10410,
-                                color = Color(0xFF00BCD4), // Teal/Cyan
-                                onProcedureSelected = onProcedureSelected,
-                                modifier = Modifier.weight(1f)
-                            )
-                            ProcedureButton(
-                                procedure = Procedure.NONE,
-                                color = Color(0xFF9C27B0),
-                                onProcedureSelected = onProcedureSelected,
-                                modifier = Modifier.weight(1f)
-                            )
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(64.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                ProcedureButton(
+                                    procedure = Procedure.PROC_10410,
+                                    color = Color(0xFF00BCD4),
+                                    onProcedureSelected = onProcedureSelected,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                ProcedureButton(
+                                    procedure = Procedure.NONE,
+                                    color = Color(0xFF9C27B0),
+                                    onProcedureSelected = onProcedureSelected,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            val context = LocalContext.current
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                Button(
+                                    onClick = { 
+                                        var currentContext = context
+                                        while (currentContext !is Activity && currentContext is android.content.ContextWrapper) {
+                                            currentContext = currentContext.baseContext
+                                        }
+                                        (currentContext as? Activity)?.finishAffinity()
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF771010), contentColor = Color.White),
+                                    shape = MaterialTheme.shapes.medium,
+                                    modifier = Modifier.height(48.dp).width(110.dp)
+                                ) {
+                                    Text("Quitter", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
+                                }
+                            }
                         }
-                    }
                 }
             }
         }
@@ -490,7 +517,7 @@ fun ProcedureButton(
     ) {
         Text(
             text = procedure.label,
-            style = if (procedure == Procedure.NONE) MaterialTheme.typography.titleMedium else MaterialTheme.typography.headlineSmall,
+            style = if (procedure == Procedure.NONE) MaterialTheme.typography.labelLarge else MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Black,
             textAlign = TextAlign.Center
         )
@@ -665,7 +692,7 @@ private fun formatTime(seconds: Long): String {
 }
 
 @Composable
-fun ArrivalList(arrivals: List<Arrival>) {
+fun ArrivalList(arrivals: List<Arrival>, modifier: Modifier = Modifier) {
     val listState = rememberLazyListState()
     
     LaunchedEffect(arrivals.size) {
@@ -674,7 +701,7 @@ fun ArrivalList(arrivals: List<Arrival>) {
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = modifier.fillMaxSize()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()

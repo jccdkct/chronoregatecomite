@@ -10,6 +10,20 @@ Chronocoursejc2 est une application de chronométrage de haute précision spéci
 *   **Exportation des Résultats :** Génération automatique d'un fichier texte formaté dans le dossier `Téléchargements` pour une transmission rapide des résultats.
 *   **Optimisation pour le Terrain :** Luminosité forcée à 100% et écran toujours allumé pour une lisibilité maximale en extérieur, même sous plein soleil.
 
+## Aperçu de l'application
+
+Voici quelques captures d'écran illustrant l'interface et les fonctionnalités de Chronocoursejc2 :
+
+### Interface Principale et Procédures
+| Écran de chronométrage | Choix de la procédure |
+|:---:|:---:|
+| ![Chronométrage](screenshots/Screenshot_20260602_230238.png) | ![Sélection procédure](screenshots/Screenshot_20260602_230030.png) |
+
+### Enregistrement des Arrivées
+| Listing des concurrents | Visualisation des résultats |
+|:---:|:---:|
+| ![Listing](screenshots/Screenshot_20260602_230133.png) | ![Visualiseur](screenshots/Screenshot_20260602_230140.png) |
+
 ## Installation & Utilisation
 
 1.  **Téléchargement :** Clonez ce dépôt ou téléchargez l'APK depuis la section [Releases](https://github.com/votre-nom/Chronocoursejc2/releases) (si disponible).
