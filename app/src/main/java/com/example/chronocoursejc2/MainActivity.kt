@@ -40,11 +40,6 @@ class MainActivity : ComponentActivity() {
         val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_NOTIFICATION)
         audioManager.setStreamVolume(AudioManager.STREAM_NOTIFICATION, maxVolume, 0)
 
-        // Set Brightness to 100% at launch
-        val lp = window.attributes
-        lp.screenBrightness = 1.0f
-        window.attributes = lp
-
         enableEdgeToEdge()
         
         setContent {
