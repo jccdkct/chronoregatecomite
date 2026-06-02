@@ -500,9 +500,9 @@ fun ArrivalList(arrivals: List<Arrival>) {
         ) {
             Text("Rang", fontWeight = FontWeight.Bold, modifier = Modifier.width(36.dp), style = MaterialTheme.typography.labelSmall)
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Duree", fontWeight = FontWeight.Bold, modifier = Modifier.width(72.dp), style = MaterialTheme.typography.labelSmall)
-            Spacer(modifier = Modifier.width(28.dp)) // Shifted right by ~2 chars
-            Text("Heure", fontWeight = FontWeight.Bold, modifier = Modifier.width(72.dp), style = MaterialTheme.typography.labelSmall)
+            Text("Duree", fontWeight = FontWeight.Bold, modifier = Modifier.width(85.dp), style = MaterialTheme.typography.labelSmall)
+            Spacer(modifier = Modifier.width(28.dp))
+            Text("Heure", fontWeight = FontWeight.Bold, modifier = Modifier.width(85.dp), style = MaterialTheme.typography.labelSmall)
         }
         HorizontalDivider()
         LazyColumn(
@@ -539,14 +539,14 @@ fun ArrivalRow(arrival: Arrival) {
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = arrival.duration,
-            modifier = Modifier.width(72.dp),
+            modifier = Modifier.width(85.dp),
             style = textStyle,
             maxLines = 1
         )
         Spacer(modifier = Modifier.width(28.dp)) // Shifted right by ~2 chars
         Text(
             text = arrival.arrivalTime,
-            modifier = Modifier.width(72.dp),
+            modifier = Modifier.width(85.dp),
             style = textStyle,
             maxLines = 1
         )
@@ -580,7 +580,7 @@ fun BottomButtons(
             Button(
                 onClick = { if (isInitial) onStartStopClick() else onArrivalClick() },
                 modifier = Modifier
-                    .weight(1.15f)
+                    .weight(1.3f)
                     .height(96.dp),
                 shape = MaterialTheme.shapes.medium,
                 enabled = if (isInitial) true else isArrivalActive,
@@ -611,7 +611,7 @@ fun BottomButtons(
             Button(
                 onClick = onStartStopClick,
                 modifier = Modifier
-                    .weight(0.85f)
+                    .weight(0.7f)
                     .height(96.dp),
                 shape = MaterialTheme.shapes.medium,
                 enabled = isRunning,

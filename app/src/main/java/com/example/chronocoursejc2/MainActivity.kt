@@ -1,6 +1,8 @@
 package com.example.chronocoursejc2
 
+import android.content.Context
 import android.content.pm.ActivityInfo
+import android.media.AudioManager
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.WindowManager
@@ -33,10 +35,22 @@ class MainActivity : ComponentActivity() {
         // Keep Screen On
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-        // Set Brightness to 100%
+        // Set Notification Volume to 100% at launch
+        val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
+        val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_NOTIFICATION)
+        audioManager.setStreamVolume(AudioManager.STREAM_NOTIFICATION, maxVolume, 0)
+
+        // Set Brightness to 100% at launch but don't block it forever
         val lp = window.attributes
         lp.screenBrightness = 1.0f
         window.attributes = lp
+        
+        // Let system take over after a short delay so user can adjust it
+        window.decorView.postDelayed({
+            val lpReset = window.attributes
+            lpReset.screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+            window.attributes = lpReset
+        }, 5000)
 
         enableEdgeToEdge()
         
