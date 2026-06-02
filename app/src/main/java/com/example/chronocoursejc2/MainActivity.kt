@@ -40,17 +40,10 @@ class MainActivity : ComponentActivity() {
         val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_NOTIFICATION)
         audioManager.setStreamVolume(AudioManager.STREAM_NOTIFICATION, maxVolume, 0)
 
-        // Set Brightness to 100% at launch but don't block it forever
+        // Set Brightness to 100% at launch
         val lp = window.attributes
         lp.screenBrightness = 1.0f
         window.attributes = lp
-        
-        // Let system take over after a short delay so user can adjust it
-        window.decorView.postDelayed({
-            val lpReset = window.attributes
-            lpReset.screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
-            window.attributes = lpReset
-        }, 5000)
 
         enableEdgeToEdge()
         
