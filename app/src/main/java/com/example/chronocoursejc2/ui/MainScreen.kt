@@ -3,15 +3,18 @@ package com.example.chronocoursejc2.ui
 import android.app.Activity
 import android.app.DownloadManager
 import android.content.Intent
+import android.view.WindowManager
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.BatteryFull
+import androidx.compose.material.icons.rounded.BrightnessHigh
+import androidx.compose.material.icons.rounded.BrightnessLow
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material3.*
@@ -96,6 +99,7 @@ fun MainScreenContent(
     val context = LocalContext.current
     var showStopDialog by remember { mutableStateOf(false) }
     var showTextViewer by remember { mutableStateOf(false) }
+    var forceShowPostRaceDialog by remember { mutableStateOf(false) }
 
     val customDeepTeal = Color(0xFF003333)
     val customDarkRed = Color(0xFF771010)
@@ -124,7 +128,7 @@ fun MainScreenContent(
             dismissButton = {
                 Button(
                     onClick = { showStopDialog = false },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD4EDDA), contentColor = Color(0xFF155724))
+                    colors = ButtonDefaults.buttonColors(containerColor = customDeepTeal, contentColor = Color.White)
                 ) {
                     Text("continuer")
                 }
@@ -132,37 +136,39 @@ fun MainScreenContent(
         )
     }
 
-    if (showPostRaceDialog) {
+    if (showPostRaceDialog || forceShowPostRaceDialog) {
         AlertDialog(
             onDismissRequest = { },
             title = { Text("Course terminée") },
             text = {
                 Column {
-                    Text("Listing sauvegardé dans téléchargement.")
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(
-                            onClick = {
-                                val intent = Intent(DownloadManager.ACTION_VIEW_DOWNLOADS)
-                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                context.startActivity(intent)
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = customGray, contentColor = Color.White),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("ouvrir le dossier", style = MaterialTheme.typography.labelSmall)
+                    if (raceState == RaceState.STOPPED && arrivals.isNotEmpty()) {
+                        Text("Listing sauvegardé dans téléchargement.")
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(
+                                onClick = {
+                                    val intent = Intent(DownloadManager.ACTION_VIEW_DOWNLOADS)
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    context.startActivity(intent)
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = customGray, contentColor = Color.White),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("ouvrir le dossier", style = MaterialTheme.typography.labelSmall)
+                            }
+                            Button(
+                                onClick = { showTextViewer = true },
+                                colors = ButtonDefaults.buttonColors(containerColor = customGray, contentColor = Color.White),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("ouvrir ici", style = MaterialTheme.typography.labelSmall)
+                            }
                         }
-                        Button(
-                            onClick = { showTextViewer = true },
-                            colors = ButtonDefaults.buttonColors(containerColor = customGray, contentColor = Color.White),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("ouvrir ici", style = MaterialTheme.typography.labelSmall)
-                        }
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
                     Text("Quitter ou relancer l'application ?", fontWeight = FontWeight.Bold)
                 }
             },
@@ -177,7 +183,10 @@ fun MainScreenContent(
             },
             dismissButton = {
                 Button(
-                    onClick = { onResetRace() },
+                    onClick = { 
+                        forceShowPostRaceDialog = false
+                        onResetRace() 
+                    },
                     colors = ButtonDefaults.buttonColors(containerColor = customDeepTeal, contentColor = Color.White),
                     shape = MaterialTheme.shapes.medium
                 ) {
@@ -231,11 +240,20 @@ fun MainScreenContent(
         bottomBar = {
             BottomButtons(
                 raceState = raceState,
-                onArrivalClick = onArrivalClick,
-                onStartStopClick = {
-                    if (raceState == RaceState.READY || raceState == RaceState.IDLE) {
+                onLeftClick = {
+                    val isInitial = raceState == RaceState.IDLE || raceState == RaceState.READY
+                    if (isInitial) {
                         onTriggerStartAction()
-                    } else if (raceState == RaceState.RUNNING || raceState == RaceState.COUNTDOWN) {
+                    } else {
+                        onArrivalClick()
+                    }
+                },
+                onRightClick = {
+                    val isInitial = raceState == RaceState.IDLE || raceState == RaceState.READY
+                    if (isInitial) {
+                        // Brutal stop: no confirmation, show post-race dialog immediately
+                        forceShowPostRaceDialog = true
+                    } else {
                         showStopDialog = true
                     }
                 },
@@ -391,6 +409,15 @@ fun ProcedureSelectionDialog(onProcedureSelected: (Procedure) -> Unit) {
 
 @Composable
 fun TopBar(currentTime: String, batteryPercentage: Int) {
+    val context = LocalContext.current
+    
+    fun setBrightness(value: Float) {
+        val activity = context as? Activity ?: return
+        val layoutParams: WindowManager.LayoutParams = activity.window.attributes
+        layoutParams.screenBrightness = value
+        activity.window.attributes = layoutParams
+    }
+
     Surface(
         color = MaterialTheme.colorScheme.primaryContainer,
         contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -419,6 +446,43 @@ fun TopBar(currentTime: String, batteryPercentage: Int) {
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Icon(Icons.Rounded.BatteryFull, contentDescription = null)
+                
+                Spacer(modifier = Modifier.width(8.dp))
+                
+                // Brightness 50%
+                Surface(
+                    onClick = { setBrightness(0.5f) },
+                    shape = MaterialTheme.shapes.small,
+                    color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
+                    modifier = Modifier.size(width = 42.dp, height = 32.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Rounded.BrightnessLow,
+                            contentDescription = "Éclairage faible",
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.width(4.dp))
+                
+                // Brightness 100%
+                Surface(
+                    onClick = { setBrightness(1.0f) },
+                    shape = MaterialTheme.shapes.small,
+                    color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
+                    modifier = Modifier.size(width = 42.dp, height = 32.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Rounded.BrightnessHigh,
+                            contentDescription = "Éclairage fort",
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+
                 Spacer(modifier = Modifier.width(8.dp))
                 Image(
                     painter = painterResource(id = R.mipmap.ic_launcher_custom),
@@ -510,7 +574,7 @@ fun ArrivalList(arrivals: List<Arrival>) {
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(vertical = 4.dp)
         ) {
-            items(arrivals) { arrival ->
+            itemsIndexed(arrivals) { index, arrival ->
                 ArrivalRow(arrival)
             }
         }
@@ -556,8 +620,8 @@ fun ArrivalRow(arrival: Arrival) {
 @Composable
 fun BottomButtons(
     raceState: RaceState,
-    onArrivalClick: () -> Unit,
-    onStartStopClick: () -> Unit,
+    onLeftClick: () -> Unit,
+    onRightClick: () -> Unit,
     deepTealColor: Color,
     darkRedColor: Color
 ) {
@@ -578,7 +642,7 @@ fun BottomButtons(
         ) {
             // LEFT BUTTON: Démarrer or Arrivée
             Button(
-                onClick = { if (isInitial) onStartStopClick() else onArrivalClick() },
+                onClick = onLeftClick,
                 modifier = Modifier
                     .weight(1.3f)
                     .height(96.dp),
@@ -609,17 +673,15 @@ fun BottomButtons(
 
             // RIGHT BUTTON: Arrêter
             Button(
-                onClick = onStartStopClick,
+                onClick = onRightClick,
                 modifier = Modifier
                     .weight(0.7f)
                     .height(96.dp),
                 shape = MaterialTheme.shapes.medium,
-                enabled = isRunning,
+                enabled = true,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = darkRedColor,
-                    contentColor = Color.White,
-                    disabledContainerColor = Color.Gray.copy(alpha = 0.2f),
-                    disabledContentColor = Color.Black.copy(alpha = 0.3f)
+                    contentColor = Color.White
                 )
             ) {
                 Text("Arrêter", textAlign = TextAlign.Center, style = MaterialTheme.typography.labelLarge)
