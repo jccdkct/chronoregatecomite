@@ -10,20 +10,6 @@ Chronocoursejc2 est une application de chronométrage de haute précision spéci
 *   **Exportation des Résultats :** Génération automatique d'un fichier texte formaté dans le dossier `Téléchargements` pour une transmission rapide des résultats.
 *   **Optimisation pour le Terrain :** Luminosité forcée à 100% et écran toujours allumé pour une lisibilité maximale en extérieur, même sous plein soleil.
 
-## Aperçu de l'application
-
-Voici quelques captures d'écran illustrant l'interface et les fonctionnalités de Chronocoursejc2 :
-
-### Interface Principale et Procédures
-| Écran de chronométrage | Choix de la procédure |
-|:---:|:---:|
-| ![Chronométrage](screenshots/Screenshot_20260602_230238.png) | ![Sélection procédure](screenshots/Screenshot_20260602_230030.png) |
-
-### Enregistrement des Arrivées
-| Listing des concurrents | Visualisation des résultats |
-|:---:|:---:|
-| ![Listing](screenshots/Screenshot_20260602_230133.png) | ![Visualiseur](screenshots/Screenshot_20260602_230140.png) |
-
 ## Installation & Utilisation
 
 1.  **Téléchargement :** Clonez ce dépôt ou téléchargez l'APK depuis la section [Releases](https://github.com/votre-nom/Chronocoursejc2/releases) (si disponible).
@@ -37,3 +23,34 @@ Les contributions sont les bienvenues ! N'hésitez pas à ouvrir une *Issue* pou
 ## Licence
 
 Ce projet est sous licence **MIT**. Voir le fichier [LICENSE](LICENSE) pour plus de détails.
+
+## Captures d'écran
+
+![Screenshot_20260602_225313-2](screenshots/Screenshot_20260602_225313-2.png)
+![Screenshot_20260602_225313](screenshots/Screenshot_20260602_225313.png)
+![Screenshot_20260602_225348](screenshots/Screenshot_20260602_225348.png)
+![Screenshot_20260602_225357](screenshots/Screenshot_20260602_225357.png)
+![Screenshot_20260602_225545](screenshots/Screenshot_20260602_225545.png)
+![Screenshot_20260602_225659](screenshots/Screenshot_20260602_225659.png)
+![Screenshot_20260602_230030](screenshots/Screenshot_20260602_230030.png)
+![Screenshot_20260602_230133](screenshots/Screenshot_20260602_230133.png)
+![Screenshot_20260602_230140](screenshots/Screenshot_20260602_230140.png)
+![Screenshot_20260602_230145](screenshots/Screenshot_20260602_230145.png)
+![Screenshot_20260602_230149](screenshots/Screenshot_20260602_230149.png)
+![Screenshot_20260602_230155](screenshots/Screenshot_20260602_230155.png)
+![Screenshot_20260602_230217--1](screenshots/Screenshot_20260602_230217--1.png)
+![Screenshot_20260602_230221](screenshots/Screenshot_20260602_230221.png)
+![Screenshot_20260602_230230](screenshots/Screenshot_20260602_230230.png)
+![Screenshot_20260602_230238](screenshots/Screenshot_20260602_230238.png)
+![Screenshot_20260602_233253_Firefox_installation__1ere](screenshots/Screenshot_20260602_233253_Firefox_installation__1ere.jpg)
+![Screenshot_20260602_233306_Firefox](screenshots/Screenshot_20260602_233306_Firefox.jpg)
+![Screenshot_20260602_233320_Firefox](screenshots/Screenshot_20260602_233320_Firefox.jpg)
+![Screenshot_20260602_233332_Firefox](screenshots/Screenshot_20260602_233332_Firefox.jpg)
+![Screenshot_20260602_233343_Firefox](screenshots/Screenshot_20260602_233343_Firefox.jpg)
+![Screenshot_20260602_233346_Firefox](screenshots/Screenshot_20260602_233346_Firefox.jpg)
+![Screenshot_20260602_233353_Package installer](screenshots/Screenshot_20260602_233353_Package%20installer.jpg)
+![Screenshot_20260602_233401_Package installer](screenshots/Screenshot_20260602_233401_Package%20installer.jpg)
+![Screenshot_20260602_233409_Google Play Store](screenshots/Screenshot_20260602_233409_Google%20Play%20Store.jpg)
+![Screenshot_20260602_233415_Google Play Store](screenshots/Screenshot_20260602_233415_Google%20Play%20Store.jpg)
+![Screenshot_20260602_233430_Package installer](screenshots/Screenshot_20260602_233430_Package%20installer.jpg)
+![Screenshot_20260602_233437_Package installer_derniere](screenshots/Screenshot_20260602_233437_Package%20installer_derniere.jpg)
