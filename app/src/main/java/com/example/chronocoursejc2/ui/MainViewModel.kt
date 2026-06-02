@@ -180,7 +180,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun playBeep() {
-        val toneGen = ToneGenerator(AudioManager.STREAM_ALARM, 100)
+        val toneGen = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100)
         toneGen.startTone(ToneGenerator.TONE_CDMA_PIP, 150)
     }
 

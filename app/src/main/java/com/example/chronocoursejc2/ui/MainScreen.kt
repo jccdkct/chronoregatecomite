@@ -499,10 +499,10 @@ fun ArrivalList(arrivals: List<Arrival>) {
             horizontalArrangement = Arrangement.Start
         ) {
             Text("Rang", fontWeight = FontWeight.Bold, modifier = Modifier.width(36.dp), style = MaterialTheme.typography.labelSmall)
-            Spacer(modifier = Modifier.width(8.dp)) // About two spaces
-            Text("Duree", fontWeight = FontWeight.Bold, modifier = Modifier.width(68.dp), style = MaterialTheme.typography.labelSmall)
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Heure", fontWeight = FontWeight.Bold, modifier = Modifier.width(68.dp), style = MaterialTheme.typography.labelSmall)
+            Text("Duree", fontWeight = FontWeight.Bold, modifier = Modifier.width(72.dp), style = MaterialTheme.typography.labelSmall)
+            Spacer(modifier = Modifier.width(28.dp)) // Shifted right by ~2 chars
+            Text("Heure", fontWeight = FontWeight.Bold, modifier = Modifier.width(72.dp), style = MaterialTheme.typography.labelSmall)
         }
         HorizontalDivider()
         LazyColumn(
@@ -519,6 +519,11 @@ fun ArrivalList(arrivals: List<Arrival>) {
 
 @Composable
 fun ArrivalRow(arrival: Arrival) {
+    val textStyle = MaterialTheme.typography.bodyMedium.copy(
+        fontWeight = FontWeight.Bold,
+        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+    )
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -529,19 +534,21 @@ fun ArrivalRow(arrival: Arrival) {
         Text(
             text = String.format(Locale.getDefault(), "%03d", arrival.rank),
             modifier = Modifier.width(36.dp),
-            style = MaterialTheme.typography.bodySmall.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
+            style = textStyle
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = arrival.duration,
-            modifier = Modifier.width(68.dp),
-            style = MaterialTheme.typography.bodySmall.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
+            modifier = Modifier.width(72.dp),
+            style = textStyle,
+            maxLines = 1
         )
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(28.dp)) // Shifted right by ~2 chars
         Text(
             text = arrival.arrivalTime,
-            modifier = Modifier.width(68.dp),
-            style = MaterialTheme.typography.bodySmall.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
+            modifier = Modifier.width(72.dp),
+            style = textStyle,
+            maxLines = 1
         )
     }
 }
@@ -554,6 +561,10 @@ fun BottomButtons(
     deepTealColor: Color,
     darkRedColor: Color
 ) {
+    val isInitial = raceState == RaceState.IDLE || raceState == RaceState.READY
+    val isRunning = raceState == RaceState.RUNNING || raceState == RaceState.COUNTDOWN
+    val isArrivalActive = raceState == RaceState.RUNNING
+
     Surface(
         tonalElevation = 3.dp,
         modifier = Modifier.fillMaxWidth()
@@ -565,45 +576,53 @@ fun BottomButtons(
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            val isArrivalActive = raceState == RaceState.RUNNING
+            // LEFT BUTTON: Démarrer or Arrivée
             Button(
-                onClick = onArrivalClick,
+                onClick = { if (isInitial) onStartStopClick() else onArrivalClick() },
                 modifier = Modifier
                     .weight(1.15f)
-                    .height(80.dp),
+                    .height(96.dp),
                 shape = MaterialTheme.shapes.medium,
-                enabled = isArrivalActive,
-                colors = ButtonDefaults.buttonColors(containerColor = deepTealColor, contentColor = Color.White, disabledContainerColor = deepTealColor.copy(alpha = 0.5f), disabledContentColor = Color.White.copy(alpha = 0.5f))
+                enabled = if (isInitial) true else isArrivalActive,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = deepTealColor,
+                    contentColor = Color.White,
+                    disabledContainerColor = deepTealColor.copy(alpha = 0.5f),
+                    disabledContentColor = Color.White.copy(alpha = 0.5f)
+                )
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Arrivée d'un concurrent", textAlign = TextAlign.Center, style = MaterialTheme.typography.labelLarge)
-                    if (isArrivalActive) {
-                        Text("(touche volume moins)", style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp), color = Color.White.copy(alpha = 0.8f))
+                    Text(
+                        text = if (isInitial) "Démarrer" else "Arrivée d'un concurrent",
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                    if (isInitial || isArrivalActive) {
+                        Text(
+                            text = "(touche volume moins)",
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                            color = Color.White.copy(alpha = 0.8f)
+                        )
                     }
                 }
             }
-            
-            val isRunning = raceState == RaceState.RUNNING || raceState == RaceState.COUNTDOWN
-            val isStartActive = raceState == RaceState.IDLE || raceState == RaceState.READY
-            
-            FilledTonalButton(
+
+            // RIGHT BUTTON: Arrêter
+            Button(
                 onClick = onStartStopClick,
                 modifier = Modifier
                     .weight(0.85f)
-                    .height(80.dp),
+                    .height(96.dp),
                 shape = MaterialTheme.shapes.medium,
-                colors = if (isRunning) {
-                    ButtonDefaults.filledTonalButtonColors(containerColor = darkRedColor, contentColor = Color.White)
-                } else {
-                    ButtonDefaults.filledTonalButtonColors(containerColor = deepTealColor, contentColor = Color.White)
-                }
+                enabled = isRunning,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = darkRedColor,
+                    contentColor = Color.White,
+                    disabledContainerColor = Color.Gray.copy(alpha = 0.2f),
+                    disabledContentColor = Color.Black.copy(alpha = 0.3f)
+                )
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(if (isRunning) "Arrêter" else "Démarrer", textAlign = TextAlign.Center, style = MaterialTheme.typography.labelLarge)
-                    if (isStartActive) {
-                        Text("(touche volume moins)", style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp), color = Color.White.copy(alpha = 0.8f))
-                    }
-                }
+                Text("Arrêter", textAlign = TextAlign.Center, style = MaterialTheme.typography.labelLarge)
             }
         }
     }
