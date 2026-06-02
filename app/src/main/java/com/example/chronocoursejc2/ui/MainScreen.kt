@@ -143,20 +143,29 @@ fun MainScreenContent(
             title = { Text("Course terminée") },
             text = {
                 Column {
-                    Text("Listing sauvegardé dans téléchargement.")
+                    Text("Listing sauvegardé dans Documents/Chronocourse.")
                     Spacer(modifier = Modifier.height(12.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(
                             onClick = {
-                                val intent = Intent(DownloadManager.ACTION_VIEW_DOWNLOADS)
+                                // Attempt to open the file manager at the documents root
+                                val intent = Intent(Intent.ACTION_VIEW)
+                                intent.setDataAndType(android.net.Uri.parse("content://com.android.externalstorage.documents/root/primary"), "vnd.android.document/root")
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                context.startActivity(intent)
+                                try {
+                                    context.startActivity(intent)
+                                } catch (e: Exception) {
+                                    // Fallback to a generic picker if the specific root fails
+                                    val fallbackIntent = Intent(Intent.ACTION_GET_CONTENT)
+                                    fallbackIntent.type = "*/*"
+                                    context.startActivity(Intent.createChooser(fallbackIntent, "Ouvrir les documents"))
+                                }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = customGray, contentColor = Color.White),
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("ouvrir le dossier", style = MaterialTheme.typography.labelSmall)
+                            Text("ouvrir l'explorateur de fichiers", style = MaterialTheme.typography.labelSmall)
                         }
                         Button(
                             onClick = { showTextViewer = true },
@@ -248,20 +257,20 @@ fun MainScreenContent(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Image(
-            painter = painterResource(id = R.drawable.fond1),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
-        Scaffold(
-            modifier = Modifier.fillMaxSize(),
-            containerColor = Color.Transparent,
-            topBar = {
-                TopBar(currentTime, batteryPercentage)
-            },
-            bottomBar = {
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
+            TopBar(currentTime, batteryPercentage)
+        },
+        bottomBar = {
+            Column {
+                // FOOTER IMAGE: Placed just above the buttons, full width
+                Image(
+                    painter = painterResource(id = R.drawable.fond3),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxWidth(),
+                    contentScale = ContentScale.FillWidth
+                )
                 BottomButtons(
                     raceState = raceState,
                     onLeftClick = {
@@ -285,44 +294,44 @@ fun MainScreenContent(
                     darkRedColor = customDarkRed
                 )
             }
-        ) { innerPadding ->
-            Column(
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .fillMaxSize()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                TimingDisplay(raceState, remainingTime, elapsedTime)
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            TimingDisplay(raceState, remainingTime, elapsedTime)
+            
+            if (selectedProcedure != null && (raceState == RaceState.COUNTDOWN || raceState == RaceState.RUNNING)) {
+                Spacer(modifier = Modifier.height(12.dp))
                 
-                if (selectedProcedure != null && (raceState == RaceState.COUNTDOWN || raceState == RaceState.RUNNING)) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        val departureInfo = buildAnnotatedString {
-                            append("Course dont le départ est à ")
-                            withStyle(style = SpanStyle(fontSize = 18.sp, fontWeight = FontWeight.Black)) {
-                                append(plannedDepartureTimeLabel)
-                            }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    val departureInfo = buildAnnotatedString {
+                        append("Course dont le départ est à ")
+                        withStyle(style = SpanStyle(fontSize = 18.sp, fontWeight = FontWeight.Black)) {
+                            append(plannedDepartureTimeLabel)
                         }
-                        Text(
-                            text = departureInfo,
-                            style = MaterialTheme.typography.bodyMedium,
-                            textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = "(type ${selectedProcedure.label})",
-                            style = MaterialTheme.typography.bodySmall,
-                            textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
-                        )
                     }
+                    Text(
+                        text = departureInfo,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "(type ${selectedProcedure.label})",
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                    )
                 }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                ArrivalList(arrivals)
             }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            ArrivalList(arrivals)
         }
     }
 }
@@ -348,7 +357,7 @@ fun ProcedureSelectionDialog(onProcedureSelected: (Procedure) -> Unit) {
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     Image(
-                        painter = painterResource(id = R.drawable.fond1),
+                        painter = painterResource(id = R.drawable.fond3),
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop,
@@ -363,13 +372,36 @@ fun ProcedureSelectionDialog(onProcedureSelected: (Procedure) -> Unit) {
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "Choix de la procédure de départ",
+                            text = "Choix du compte à rebours (minutes)",
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(24.dp))
                         
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(90.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            ProcedureButton(
+                                procedure = Procedure.PROC_10,
+                                color = Color(0xFFFF5722), // Deep Orange
+                                onProcedureSelected = onProcedureSelected,
+                                modifier = Modifier.weight(1f)
+                            )
+                            ProcedureButton(
+                                procedure = Procedure.PROC_210,
+                                color = Color(0xFF673AB7), // Deep Purple
+                                onProcedureSelected = onProcedureSelected,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -729,7 +761,7 @@ fun BottomButtons(
             Button(
                 onClick = onLeftClick,
                 modifier = Modifier
-                    .weight(1.3f)
+                    .weight(1.15f)
                     .height(96.dp),
                 shape = MaterialTheme.shapes.medium,
                 enabled = if (isInitial) true else isArrivalActive,
@@ -759,7 +791,7 @@ fun BottomButtons(
             Button(
                 onClick = onRightClick,
                 modifier = Modifier
-                    .weight(0.7f)
+                    .weight(0.85f)
                     .height(96.dp),
                 shape = MaterialTheme.shapes.medium,
                 enabled = true,

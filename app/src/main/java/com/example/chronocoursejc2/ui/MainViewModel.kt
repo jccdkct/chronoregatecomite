@@ -32,11 +32,13 @@ enum class RaceState {
 }
 
 enum class Procedure(val totalSeconds: Long, val milestones: List<Long>, val label: String) {
-    PROC_3210(180, listOf(120, 60, 0), "3 2 1 0"),
-    PROC_5410(300, listOf(240, 60, 0), "5 4 1 0"),
-    PROC_6410(360, listOf(240, 60, 0), "6 4 1 0"),
-    PROC_8410(480, listOf(240, 60, 0), "8 4 1 0"),
-    PROC_10410(600, listOf(240, 60, 0), "10 4 1 0"),
+    PROC_10(60, listOf(0), "1-0"),
+    PROC_210(120, listOf(60, 0), "2-1-0"),
+    PROC_3210(180, listOf(120, 60, 0), "3-2-1-0"),
+    PROC_5410(300, listOf(240, 60, 0), "5-4-1-0"),
+    PROC_6410(360, listOf(240, 60, 0), "6-4-1-0"),
+    PROC_8410(480, listOf(240, 60, 0), "8-4-1-0"),
+    PROC_10410(600, listOf(240, 60, 0), "10-4-1-0"),
     NONE(0, emptyList(), "Sans compte à rebours")
 }
 
@@ -229,20 +231,25 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
             _lastSavedFileContent.value = content
 
+            val relativePath = "${Environment.DIRECTORY_DOCUMENTS}/Chronocourse"
+            
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 val resolver = getApplication<Application>().contentResolver
                 val contentValues = ContentValues().apply {
                     put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
                     put(MediaStore.MediaColumns.MIME_TYPE, "text/plain")
-                    put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+                    put(MediaStore.MediaColumns.RELATIVE_PATH, relativePath)
                 }
-                val uri: Uri? = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+                // Use MediaStore.Files for Documents folder
+                val uri: Uri? = resolver.insert(MediaStore.Files.getContentUri("external"), contentValues)
                 uri?.let {
                     resolver.openOutputStream(it)?.use { it.write(content.toByteArray()) }
                 }
             } else {
-                val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                val file = File(downloadsDir, fileName)
+                val documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+                val folder = File(documentsDir, "Chronocourse")
+                if (!folder.exists()) folder.mkdirs()
+                val file = File(folder, fileName)
                 FileOutputStream(file).use { it.write(content.toByteArray()) }
             }
             
