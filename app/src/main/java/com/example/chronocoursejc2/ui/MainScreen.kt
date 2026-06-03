@@ -1,12 +1,14 @@
 package com.example.chronocoursejc2.ui
 
 import android.app.Activity
-import android.app.DownloadManager
 import android.content.Context
 import android.content.Intent
 import android.media.AudioManager
+import android.media.ToneGenerator
 import android.view.WindowManager
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -14,9 +16,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.BatteryFull
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Schedule
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -57,6 +59,8 @@ fun MainScreen(
     val selectedProcedure by viewModel.selectedProcedure.collectAsStateWithLifecycle()
     val plannedDepartureTimeLabel by viewModel.plannedDepartureTimeLabel.collectAsStateWithLifecycle()
     val lastSavedFileContent by viewModel.lastSavedFileContent.collectAsStateWithLifecycle()
+    val savedFilesCount by viewModel.savedFilesCount.collectAsStateWithLifecycle()
+    val selectedBeepTone by viewModel.selectedBeepTone.collectAsStateWithLifecycle()
 
     MainScreenContent(
         currentTime = currentTime,
@@ -70,11 +74,16 @@ fun MainScreen(
         selectedProcedure = selectedProcedure,
         plannedDepartureTimeLabel = plannedDepartureTimeLabel,
         lastSavedFileContent = lastSavedFileContent,
+        savedFilesCount = savedFilesCount,
+        selectedBeepTone = selectedBeepTone,
         onProcedureSelected = { viewModel.selectProcedure(it) },
         onStopAndSave = { viewModel.stopAndSave() },
         onResetRace = { viewModel.resetRace() },
         onArrivalClick = { viewModel.recordArrival() },
-        onTriggerStartAction = { viewModel.triggerStartAction() }
+        onTriggerStartAction = { viewModel.triggerStartAction() },
+        onUpdateSail = { rank, sail -> viewModel.updateSailNumber(rank, sail) },
+        onRefreshFiles = { viewModel.updateSavedFilesCount() },
+        onSetBeepTone = { viewModel.setBeepTone(it) }
     )
 }
 
@@ -91,16 +100,23 @@ fun MainScreenContent(
     selectedProcedure: Procedure?,
     plannedDepartureTimeLabel: String,
     lastSavedFileContent: String,
+    savedFilesCount: Int,
+    selectedBeepTone: Int,
     onProcedureSelected: (Procedure) -> Unit,
     onStopAndSave: () -> Unit,
     onResetRace: () -> Unit,
     onArrivalClick: () -> Unit,
-    onTriggerStartAction: () -> Unit
+    onTriggerStartAction: () -> Unit,
+    onUpdateSail: (Int, String) -> Unit,
+    onRefreshFiles: () -> Unit,
+    onSetBeepTone: (Int) -> Unit
 ) {
     val context = LocalContext.current
     var showStopDialog by remember { mutableStateOf(false) }
     var showTextViewer by remember { mutableStateOf(false) }
     var forceShowPostRaceDialog by remember { mutableStateOf(false) }
+    var editingSailForArrival by remember { mutableStateOf<Arrival?>(null) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
 
     val customDeepTeal = Color(0xFF003333)
     val customDarkRed = Color(0xFF771010)
@@ -108,6 +124,43 @@ fun MainScreenContent(
 
     if (showProcedureDialog) {
         ProcedureSelectionDialog(onProcedureSelected = onProcedureSelected)
+    }
+
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text("Suppression") },
+            text = { Text("Voulez-vous supprimer toutes les sauvegardes de plus d'un mois ?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val documentsDir = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOCUMENTS)
+                        val folder = java.io.File(documentsDir, "Chronocourse")
+                        if (folder.exists() && folder.isDirectory) {
+                            val oneMonthAgo = System.currentTimeMillis() - (30L * 24 * 60 * 60 * 1000)
+                            folder.listFiles()?.forEach { file ->
+                                if (file.lastModified() < oneMonthAgo) {
+                                    file.delete()
+                                }
+                            }
+                        }
+                        showDeleteConfirm = false
+                        onRefreshFiles()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = customDarkRed, contentColor = Color.White)
+                ) {
+                    Text("Oui")
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = { showDeleteConfirm = false },
+                    colors = ButtonDefaults.buttonColors(containerColor = customDeepTeal, contentColor = Color.White)
+                ) {
+                    Text("Non")
+                }
+            }
+        )
     }
 
     if (showStopDialog) {
@@ -131,7 +184,7 @@ fun MainScreenContent(
                     onClick = { showStopDialog = false },
                     colors = ButtonDefaults.buttonColors(containerColor = customDeepTeal, contentColor = Color.White)
                 ) {
-                    Text("continuer")
+                    Text("Continuer\nla course", textAlign = TextAlign.Center)
                 }
             }
         )
@@ -148,14 +201,12 @@ fun MainScreenContent(
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(
                             onClick = {
-                                // Attempt to open the file manager at the documents root
                                 val intent = Intent(Intent.ACTION_VIEW)
                                 intent.setDataAndType(android.net.Uri.parse("content://com.android.externalstorage.documents/root/primary"), "vnd.android.document/root")
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                 try {
                                     context.startActivity(intent)
                                 } catch (e: Exception) {
-                                    // Fallback to a generic picker if the specific root fails
                                     val fallbackIntent = Intent(Intent.ACTION_GET_CONTENT)
                                     fallbackIntent.type = "*/*"
                                     context.startActivity(Intent.createChooser(fallbackIntent, "Ouvrir les documents"))
@@ -165,7 +216,7 @@ fun MainScreenContent(
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("ouvrir l'explorateur de fichiers", style = MaterialTheme.typography.labelSmall)
+                            Text("explorateur ($savedFilesCount)", style = MaterialTheme.typography.labelSmall)
                         }
                         Button(
                             onClick = { showTextViewer = true },
@@ -177,21 +228,31 @@ fun MainScreenContent(
                         }
                     }
                     Spacer(modifier = Modifier.height(8.dp))
-                    Button(
-                        onClick = {
-                            val sendIntent: Intent = Intent().apply {
-                                action = Intent.ACTION_SEND
-                                putExtra(Intent.EXTRA_TEXT, lastSavedFileContent)
-                                type = "text/plain"
-                            }
-                            val shareIntent = Intent.createChooser(sendIntent, null)
-                            context.startActivity(shareIntent)
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = customGray, contentColor = Color.White),
-                        modifier = Modifier.fillMaxWidth(),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
-                    ) {
-                        Text("partager", style = MaterialTheme.typography.labelSmall)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(
+                            onClick = { showDeleteConfirm = true },
+                            colors = ButtonDefaults.buttonColors(containerColor = customGray, contentColor = Color.White),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                            modifier = Modifier.weight(1.2f)
+                        ) {
+                            Text("Nettoyer > 1 mois", style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
+                        }
+                        Button(
+                            onClick = {
+                                val sendIntent: Intent = Intent().apply {
+                                    action = Intent.ACTION_SEND
+                                    putExtra(Intent.EXTRA_TEXT, lastSavedFileContent)
+                                    type = "text/plain"
+                                }
+                                val shareIntent = Intent.createChooser(sendIntent, null)
+                                context.startActivity(shareIntent)
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = customGray, contentColor = Color.White),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                            modifier = Modifier.weight(0.8f)
+                        ) {
+                            Text("partager", style = MaterialTheme.typography.labelSmall)
+                        }
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     Text("Quitter ou relancer l'application ?", fontWeight = FontWeight.Bold)
@@ -257,34 +318,48 @@ fun MainScreenContent(
         }
     }
 
+    if (editingSailForArrival != null) {
+        SailNumberEntryDialog(
+            initialValue = editingSailForArrival?.sailNumber ?: "",
+            rank = editingSailForArrival?.rank ?: 0,
+            onConfirm = { rank, sail ->
+                onUpdateSail(rank, sail)
+                editingSailForArrival = null
+            },
+            onDismiss = { editingSailForArrival = null }
+        )
+    }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            TopBar(currentTime, batteryPercentage)
+            TopBar(currentTime, batteryPercentage, savedFilesCount, selectedBeepTone, onSetBeepTone)
         },
         bottomBar = {
-            BottomButtons(
-                raceState = raceState,
-                onLeftClick = {
-                    val isInitial = raceState == RaceState.IDLE || raceState == RaceState.READY
-                    if (isInitial) {
-                        onTriggerStartAction()
-                    } else {
-                        onArrivalClick()
-                    }
-                },
-                onRightClick = {
-                    val isInitial = raceState == RaceState.IDLE || raceState == RaceState.READY
-                    if (isInitial) {
-                        onStopAndSave() 
-                        forceShowPostRaceDialog = true
-                    } else {
-                        showStopDialog = true
-                    }
-                },
-                deepTealColor = customDeepTeal,
-                darkRedColor = customDarkRed
-            )
+            Column(modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars)) {
+                BottomButtons(
+                    raceState = raceState,
+                    onLeftClick = {
+                        val isInitial = raceState == RaceState.IDLE || raceState == RaceState.READY
+                        if (isInitial) {
+                            onTriggerStartAction()
+                        } else {
+                            onArrivalClick()
+                        }
+                    },
+                    onRightClick = {
+                        val isInitial = raceState == RaceState.IDLE || raceState == RaceState.READY
+                        if (isInitial) {
+                            onStopAndSave() 
+                            forceShowPostRaceDialog = true
+                        } else {
+                            showStopDialog = true
+                        }
+                    },
+                    deepTealColor = customDeepTeal,
+                    darkRedColor = customDarkRed
+                )
+            }
         }
     ) { innerPadding ->
         Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
@@ -324,7 +399,7 @@ fun MainScreenContent(
                             color = MaterialTheme.colorScheme.primary
                         )
                         Text(
-                            text = "(type ${selectedProcedure.label})",
+                            text = "(type ${selectedProcedure.label.replace("\n", " ")})",
                             style = MaterialTheme.typography.bodySmall,
                             textAlign = TextAlign.Center,
                             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
@@ -334,7 +409,7 @@ fun MainScreenContent(
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 // The list now has weight(1f), expanding to cover the image
-                ArrivalList(arrivals, modifier = Modifier.weight(1f))
+                ArrivalList(arrivals, onEditClick = { editingSailForArrival = it }, modifier = Modifier.weight(1f))
             }
         }
     }
@@ -473,12 +548,12 @@ fun ProcedureSelectionDialog(onProcedureSelected: (Procedure) -> Unit) {
                                 )
                             }
 
-                            Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(28.dp))
 
                             val context = LocalContext.current
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.End
+                                horizontalArrangement = Arrangement.Start
                             ) {
                                 Button(
                                     onClick = { 
@@ -490,9 +565,10 @@ fun ProcedureSelectionDialog(onProcedureSelected: (Procedure) -> Unit) {
                                     },
                                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF771010), contentColor = Color.White),
                                     shape = MaterialTheme.shapes.medium,
-                                    modifier = Modifier.height(48.dp).width(110.dp)
+                                    modifier = Modifier.height(32.dp).width(80.dp),
+                                    contentPadding = PaddingValues(0.dp)
                                 ) {
-                                    Text("Quitter", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
+                                    Text("Quitter", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall)
                                 }
                             }
                         }
@@ -517,7 +593,7 @@ fun ProcedureButton(
     ) {
         Text(
             text = procedure.label,
-            style = if (procedure == Procedure.NONE) MaterialTheme.typography.labelLarge else MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Black,
             textAlign = TextAlign.Center
         )
@@ -525,7 +601,13 @@ fun ProcedureButton(
 }
 
 @Composable
-fun TopBar(currentTime: String, batteryPercentage: Int) {
+fun TopBar(
+    currentTime: String, 
+    batteryPercentage: Int, 
+    savedFilesCount: Int,
+    selectedBeepTone: Int,
+    onSetBeepTone: (Int) -> Unit
+) {
     val context = LocalContext.current
     val audioManager = remember { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
     
@@ -548,6 +630,12 @@ fun TopBar(currentTime: String, batteryPercentage: Int) {
             else -> maxVol
         }
         audioManager.setStreamVolume(AudioManager.STREAM_NOTIFICATION, vol, 0)
+    }
+
+    // Apply max levels on launch
+    LaunchedEffect(Unit) {
+        setBrightness(brightnessLevel)
+        setSound(soundLevel)
     }
 
     Surface(
@@ -579,8 +667,26 @@ fun TopBar(currentTime: String, batteryPercentage: Int) {
                     style = MaterialTheme.typography.titleMedium
                 )
                 
-                Spacer(modifier = Modifier.width(8.dp))
+                if (savedFilesCount > 0) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Surface(
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        shape = MaterialTheme.shapes.extraSmall,
+                        modifier = Modifier.height(24.dp).padding(horizontal = 4.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = "📂 $savedFilesCount",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(6.dp))
                 
+                // Cycling Luminosity Button
                 val lumIcon = when(brightnessLevel) {
                     100 -> R.drawable.lum100
                     50 -> R.drawable.lum050
@@ -595,17 +701,18 @@ fun TopBar(currentTime: String, batteryPercentage: Int) {
                         }
                         setBrightness(brightnessLevel)
                     },
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier.size(36.dp)
                 ) {
                     Image(
                         painter = painterResource(id = lumIcon),
-                        contentDescription = "Luminosité $brightnessLevel%",
-                        modifier = Modifier.size(32.dp)
+                        contentDescription = "Luminosité",
+                        modifier = Modifier.size(28.dp)
                     )
                 }
                 
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(2.dp))
                 
+                // Cycling Sound Button
                 val soundIcon = when(soundLevel) {
                     3 -> R.drawable.son3
                     2 -> R.drawable.son2
@@ -620,21 +727,56 @@ fun TopBar(currentTime: String, batteryPercentage: Int) {
                         }
                         setSound(soundLevel)
                     },
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier.size(36.dp)
                 ) {
                     Image(
                         painter = painterResource(id = soundIcon),
-                        contentDescription = "Volume niveau $soundLevel",
-                        modifier = Modifier.size(32.dp)
+                        contentDescription = "Volume",
+                        modifier = Modifier.size(28.dp)
                     )
                 }
 
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(2.dp))
+
+                // Cycling Beep Button
+                IconButton(
+                    onClick = {
+                        val nextTone = when(selectedBeepTone) {
+                            android.media.ToneGenerator.TONE_CDMA_PIP -> android.media.ToneGenerator.TONE_PROP_BEEP2
+                            android.media.ToneGenerator.TONE_PROP_BEEP2 -> android.media.ToneGenerator.TONE_CDMA_HIGH_L
+                            else -> android.media.ToneGenerator.TONE_CDMA_PIP
+                        }
+                        onSetBeepTone(nextTone)
+                    },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Rounded.GraphicEq,
+                            contentDescription = "Bip",
+                            modifier = Modifier.size(24.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        val badgeText = when(selectedBeepTone) {
+                            android.media.ToneGenerator.TONE_CDMA_PIP -> "1"
+                            android.media.ToneGenerator.TONE_PROP_BEEP2 -> "2"
+                            else -> "3"
+                        }
+                        Text(
+                            text = badgeText,
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                            fontWeight = FontWeight.Black,
+                            modifier = Modifier.align(Alignment.BottomEnd).background(MaterialTheme.colorScheme.surface, MaterialTheme.shapes.extraSmall).padding(1.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(4.dp))
                 Image(
                     painter = painterResource(id = R.mipmap.ic_launcher_custom),
                     contentDescription = "App Icon",
                     modifier = Modifier
-                        .size(32.dp)
+                        .size(28.dp)
                         .clip(MaterialTheme.shapes.small)
                 )
             }
@@ -692,12 +834,12 @@ private fun formatTime(seconds: Long): String {
 }
 
 @Composable
-fun ArrivalList(arrivals: List<Arrival>, modifier: Modifier = Modifier) {
+fun ArrivalList(arrivals: List<Arrival>, onEditClick: (Arrival) -> Unit, modifier: Modifier = Modifier) {
     val listState = rememberLazyListState()
     
     LaunchedEffect(arrivals.size) {
         if (arrivals.isNotEmpty()) {
-            listState.animateScrollToItem(0)
+            listState.animateScrollToItem(arrivals.size - 1)
         }
     }
 
@@ -706,60 +848,103 @@ fun ArrivalList(arrivals: List<Arrival>, modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 4.dp),
-            horizontalArrangement = Arrangement.Start
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text("Rang", fontWeight = FontWeight.Bold, modifier = Modifier.width(36.dp), style = MaterialTheme.typography.labelSmall)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Duree", fontWeight = FontWeight.Bold, modifier = Modifier.width(85.dp), style = MaterialTheme.typography.labelSmall)
-            Spacer(modifier = Modifier.width(28.dp))
-            Text("Heure", fontWeight = FontWeight.Bold, modifier = Modifier.width(85.dp), style = MaterialTheme.typography.labelSmall)
+            VerticalSeparator()
+            Text("Duree", fontWeight = FontWeight.Bold, modifier = Modifier.width(80.dp), style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
+            VerticalSeparator()
+            Text("Heure", fontWeight = FontWeight.Bold, modifier = Modifier.width(80.dp), style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
+            VerticalSeparator()
+            Text("N° Voile", fontWeight = FontWeight.Bold, modifier = Modifier.width(80.dp), style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
+            VerticalSeparator()
+            Text("", modifier = Modifier.width(40.dp))
         }
-        HorizontalDivider()
+        HorizontalDivider(thickness = 2.dp, color = Color.Black)
         LazyColumn(
             state = listState,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(vertical = 4.dp)
+            modifier = Modifier.fillMaxSize()
         ) {
             itemsIndexed(arrivals) { index, arrival ->
-                ArrivalRow(arrival)
+                ArrivalRow(arrival, index, onEditClick)
+                HorizontalDivider(thickness = 1.dp, color = Color.LightGray)
             }
         }
     }
 }
 
 @Composable
-fun ArrivalRow(arrival: Arrival) {
+fun VerticalSeparator() {
+    Box(
+        modifier = Modifier
+            .width(1.dp)
+            .height(20.dp)
+            .background(Color.Gray.copy(alpha = 0.5f))
+    )
+}
+
+@Composable
+fun ArrivalRow(arrival: Arrival, index: Int, onEditClick: (Arrival) -> Unit) {
     val textStyle = MaterialTheme.typography.bodyMedium.copy(
         fontWeight = FontWeight.Bold,
         fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
     )
+    
+    val backgroundColor = if (index % 2 == 0) Color.White else Color(0xFFF9F9F9)
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .background(backgroundColor)
+            .height(IntrinsicSize.Min),
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = String.format(Locale.getDefault(), "%03d", arrival.rank),
+            text = arrival.rank.toString(),
             modifier = Modifier.width(36.dp),
-            style = textStyle
+            style = textStyle,
+            textAlign = TextAlign.Center
         )
-        Spacer(modifier = Modifier.width(8.dp))
+        Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(Color.Gray.copy(alpha = 0.3f)))
         Text(
             text = arrival.duration,
-            modifier = Modifier.width(85.dp),
+            modifier = Modifier.width(80.dp),
             style = textStyle,
-            maxLines = 1
+            maxLines = 1,
+            textAlign = TextAlign.Center
         )
-        Spacer(modifier = Modifier.width(28.dp))
+        Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(Color.Gray.copy(alpha = 0.3f)))
         Text(
             text = arrival.arrivalTime,
-            modifier = Modifier.width(85.dp),
+            modifier = Modifier.width(80.dp),
             style = textStyle,
-            maxLines = 1
+            maxLines = 1,
+            textAlign = TextAlign.Center
         )
+        Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(Color.Gray.copy(alpha = 0.3f)))
+        Text(
+            text = arrival.sailNumber,
+            modifier = Modifier.width(80.dp),
+            style = textStyle,
+            maxLines = 1,
+            textAlign = TextAlign.Center
+        )
+        Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(Color.Gray.copy(alpha = 0.3f)))
+        Box(
+            modifier = Modifier
+                .width(40.dp)
+                .fillMaxHeight()
+                .clickable { onEditClick(arrival) },
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.iconeedit),
+                contentDescription = "Éditer",
+                modifier = Modifier.size(32.dp)
+            )
+        }
     }
 }
 
@@ -780,7 +965,6 @@ fun BottomButtons(
     ) {
         Row(
             modifier = Modifier
-                .windowInsetsPadding(WindowInsets.navigationBars)
                 .padding(16.dp)
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -833,6 +1017,169 @@ fun BottomButtons(
     }
 }
 
+@Composable
+fun SailNumberEntryDialog(
+    initialValue: String,
+    rank: Int,
+    onConfirm: (Int, String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var currentValue by remember { mutableStateOf(initialValue) }
+    var isNumeric by remember { mutableStateOf(true) }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.surface
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "N° Voile - Rang $rank",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    
+                    Button(
+                        onClick = { isNumeric = !isNumeric },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF607D8B))
+                    ) {
+                        Text(if (isNumeric) "ABC" else "123")
+                    }
+                }
+
+                // Result Area
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(60.dp),
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    border = androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = currentValue,
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Black
+                        )
+                    }
+                }
+
+                // Keypad
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    if (isNumeric) {
+                        val keys = listOf(
+                            listOf("1", "2", "3"),
+                            listOf("4", "5", "6"),
+                            listOf("7", "8", "9"),
+                            listOf("EFF", "0", "⌫")
+                        )
+                        keys.forEach { row ->
+                            Row(
+                                modifier = Modifier.weight(1f).fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                row.forEach { key ->
+                                    KeypadButton(key, modifier = Modifier.weight(1f)) {
+                                        when (key) {
+                                            "EFF" -> currentValue = ""
+                                            "⌫" -> if (currentValue.isNotEmpty()) currentValue = currentValue.dropLast(1)
+                                            else -> if (currentValue.length < 12) currentValue += key
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        // Alpha Keypad (Uppercase)
+                        val alphabet = ('A'..'Z').map { it.toString() } + listOf(" ", "EFF", "⌫")
+                        val rows = alphabet.chunked(5)
+                        rows.forEach { row ->
+                            Row(
+                                modifier = Modifier.weight(1f).fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                row.forEach { key ->
+                                    KeypadButton(key, modifier = Modifier.weight(1f), isSmall = true) {
+                                        when (key) {
+                                            "EFF" -> currentValue = ""
+                                            "⌫" -> if (currentValue.isNotEmpty()) currentValue = currentValue.dropLast(1)
+                                            else -> if (currentValue.length < 12) currentValue += key
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth().height(60.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        shape = MaterialTheme.shapes.medium,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
+                    ) {
+                        Text("Annuler", fontWeight = FontWeight.Bold)
+                    }
+                    Button(
+                        onClick = { onConfirm(rank, currentValue) },
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        shape = MaterialTheme.shapes.medium,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF003333))
+                    ) {
+                        Text("Valider", fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun KeypadButton(
+    text: String,
+    modifier: Modifier = Modifier,
+    isSmall: Boolean = false,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier.fillMaxHeight(),
+        contentPadding = PaddingValues(0.dp),
+        shape = MaterialTheme.shapes.small,
+        colors = if (text == "EFF" || text == "⌫")
+            ButtonDefaults.buttonColors(containerColor = Color(0xFF771010))
+            else ButtonDefaults.buttonColors(containerColor = Color(0xFF003333))
+    ) {
+        Text(
+            text = text, 
+            style = if (isSmall) MaterialTheme.typography.titleMedium else MaterialTheme.typography.headlineSmall, 
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
 @Preview(showBackground = true, device = "spec:width=360dp,height=740dp,dpi=311")
 @Composable
 fun MainScreenSmallPreview() {
@@ -840,7 +1187,7 @@ fun MainScreenSmallPreview() {
         MainScreenContent(
             currentTime = "10:30:00",
             batteryPercentage = 85,
-            arrivals = listOf(Arrival(1, "00:10:05", "10:40:05")),
+            arrivals = listOf(Arrival(1, "00:10:05", "10:40:05", "123456")),
             raceState = RaceState.RUNNING,
             remainingTime = 0,
             elapsedTime = 605,
@@ -848,12 +1195,17 @@ fun MainScreenSmallPreview() {
             showPostRaceDialog = false,
             selectedProcedure = Procedure.PROC_6410,
             plannedDepartureTimeLabel = "10:30:00",
-            lastSavedFileContent = "ApplicationChronocoursejc2\n...",
+            lastSavedFileContent = "Application Chronocoursejc2\n...",
+            savedFilesCount = 5,
+            selectedBeepTone = android.media.ToneGenerator.TONE_CDMA_PIP,
             onProcedureSelected = {},
             onStopAndSave = {},
             onResetRace = {},
             onArrivalClick = {},
-            onTriggerStartAction = {}
+            onTriggerStartAction = {},
+            onUpdateSail = { _, _ -> },
+            onRefreshFiles = {},
+            onSetBeepTone = {}
         )
     }
 }

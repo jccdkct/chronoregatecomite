@@ -39,7 +39,7 @@ enum class Procedure(val totalSeconds: Long, val milestones: List<Long>, val lab
     PROC_6410(360, listOf(240, 60, 0), "6-4-1-0"),
     PROC_8410(480, listOf(240, 60, 0), "8-4-1-0"),
     PROC_10410(600, listOf(240, 60, 0), "10-4-1-0"),
-    NONE(0, emptyList(), "Sans compte à rebours")
+    NONE(0, emptyList(), "Chrono")
 }
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -77,6 +77,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _lastSavedFileContent = MutableStateFlow("")
     val lastSavedFileContent: StateFlow<String> = _lastSavedFileContent.asStateFlow()
 
+    private val _savedFilesCount = MutableStateFlow(0)
+    val savedFilesCount: StateFlow<Int> = _savedFilesCount.asStateFlow()
+
+    private val _selectedBeepTone = MutableStateFlow(ToneGenerator.TONE_CDMA_PIP)
+    val selectedBeepTone: StateFlow<Int> = _selectedBeepTone.asStateFlow()
+
     private var raceJob: Job? = null
     private var startTime: Long = 0L
     private var departureTime: Long = 0L
@@ -103,6 +109,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
         application.registerReceiver(batteryReceiver, filter)
+        updateSavedFilesCount()
+    }
+
+    fun updateSavedFilesCount() {
+        viewModelScope.launch {
+            val documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+            val folder = File(documentsDir, "Chronocourse")
+            if (folder.exists() && folder.isDirectory) {
+                val count = folder.listFiles { file -> file.isFile && file.name.endsWith(".txt") }?.size ?: 0
+                _savedFilesCount.value = count
+            } else {
+                _savedFilesCount.value = 0
+            }
+        }
     }
 
     private fun formatTimeFull(time: Date): String {
@@ -188,7 +208,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun playBeep() {
         val toneGen = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100)
-        toneGen.startTone(ToneGenerator.TONE_CDMA_PIP, 150)
+        toneGen.startTone(_selectedBeepTone.value, 150)
     }
 
     fun recordArrival() {
@@ -203,9 +223,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val newArrival = Arrival(
             rank = rank,
             duration = formatDuration(durationMillis),
-            arrivalTime = arrivalTime
+            arrivalTime = arrivalTime,
+            sailNumber = ""
         )
-        _arrivals.value = listOf(newArrival) + _arrivals.value
+        _arrivals.value = _arrivals.value + listOf(newArrival)
+    }
+
+    fun updateSailNumber(rank: Int, sailNumber: String) {
+        _arrivals.value = _arrivals.value.map {
+            if (it.rank == rank) it.copy(sailNumber = sailNumber) else it
+        }
+    }
+
+    fun setBeepTone(tone: Int) {
+        _selectedBeepTone.value = tone
+        playBeep()
     }
 
     fun stopAndSave() {
@@ -220,13 +252,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val fileName = "ccjc2_$fileDateStr.txt"
             val content = buildString {
                 append("\uFEFF") // UTF-8 BOM for Windows encoding compatibility
-                append("ApplicationChronocoursejc2\n")
+                append("Application Chronocoursejc2\n")
                 val startDateStr = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date(startTime))
                 append("Arrivees de la course dont le depart a eu lieu\n")
                 append("le $startDateStr à $startFormattedTime\n")
-                append(String.format(Locale.getDefault(), "%-6s  %-12s  %-12s\n", "Rang", "Duree", "Heure"))
+                append("________________________________________________\n")
+                append(String.format(Locale.getDefault(), "%-6s  %-12s  %-12s  %s\n", "Rang", "Duree", "Heure", "N° Voile"))
+                append("________________________________________________\n")
                 _arrivals.value.sortedBy { it.rank }.forEach { arrival ->
-                    append(String.format(Locale.getDefault(), "%03d   %-12s  %-12s\n", arrival.rank, arrival.duration, arrival.arrivalTime))
+                    append(String.format(Locale.getDefault(), "%03d   %-12s  %-12s  %s\n", arrival.rank, arrival.duration, arrival.arrivalTime, arrival.sailNumber))
                 }
             }
             _lastSavedFileContent.value = content
@@ -246,14 +280,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     resolver.openOutputStream(it)?.use { it.write(content.toByteArray()) }
                 }
             } else {
-                val documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
-                val folder = File(documentsDir, "Chronocourse")
+                val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+                val folder = File(downloadsDir, "Chronocourse")
                 if (!folder.exists()) folder.mkdirs()
                 val file = File(folder, fileName)
                 FileOutputStream(file).use { it.write(content.toByteArray()) }
             }
             
             _showPostRaceDialog.value = true
+            updateSavedFilesCount()
         }
     }
     
@@ -298,5 +333,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 data class Arrival(
     val rank: Int,
     val duration: String,
-    val arrivalTime: String
+    val arrivalTime: String,
+    val sailNumber: String = ""
 )

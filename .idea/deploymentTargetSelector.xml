@@ -4,7 +4,7 @@
     <selectionStates>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-06-02T22:07:09.214598500Z">
+        <DropdownSelection timestamp="2026-06-03T21:05:55.386555600Z">
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\jccdk\.android\avd\Small_Phone_galaxy_xcover5.avd" />
