@@ -12,7 +12,7 @@ Chronocoursejc2 est une application de chronométrage de haute précision spéci
 
 ## Installation & Utilisation
 
-1.  **Téléchargement :** Clonez ce dépôt ou téléchargez l'APK depuis la section [Releases](https://github.com/votre-nom/Chronocoursejc2/releases) (si disponible).
+1.  **Téléchargement :** Clonez ce dépôt ou téléchargez l'APK depuis la section [Releases](https://github.com/jccdkct/Chronocoursejc2/releases) (si disponible).
 2.  **Compilation :** Ouvrez le projet dans Android Studio (Arctic Fox ou plus récent).
 3.  **Lancement :** Connectez votre smartphone Android et cliquez sur **Run**.
 
