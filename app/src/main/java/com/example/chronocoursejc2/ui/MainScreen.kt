@@ -596,39 +596,76 @@ fun ProcedureSelectionDialog(
                                 }
                             }
                             
-                            Spacer(modifier = Modifier.height(32.dp)) // Space for the banner
+                            Spacer(modifier = Modifier.height(64.dp)) // Space for the banner (taller now)
                         }
 
-                    // Update Banner - Full Width at the bottom
+                    // Update & Share Banner - Full Width at the bottom
                     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+                    val context = LocalContext.current
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(32.dp)
-                            .align(Alignment.BottomCenter)
-                            .clickable(enabled = isUpdateAvailable) {
-                                if (isUpdateAvailable) {
-                                    uriHandler.openUri("https://github.com/jccdkct/Chronocoursejc2/releases/latest/download/chronocoursejc2.apk")
-                                }
-                            },
+                            .height(64.dp)
+                            .align(Alignment.BottomCenter),
                         color = Color.Black,
                         contentColor = Color.White
                     ) {
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier.fillMaxSize()
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
                         ) {
-                            Text(
-                                text = if (isUpdateAvailable) {
-                                    "Version ${BuildConfig.VERSION_NAME} - télécharger mise à jour $latestVersion"
-                                } else {
-                                    "Version ${BuildConfig.VERSION_NAME} - Application à jour"
-                                },
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                                fontSize = 10.sp
-                            )
+                            // Line 1: Share Application
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f)
+                                    .clickable {
+                                        val shareText = "Site internet de l'app ChronoCourseJC2 : https://github.com/jccdkct/Chronocoursejc2\nLien de téléchargement du dernier fichier d'installation APK de cette application : https://github.com/jccdkct/Chronocoursejc2/releases/latest/download/chronocoursejc2.apk"
+                                        val sendIntent: Intent = Intent().apply {
+                                            action = Intent.ACTION_SEND
+                                            putExtra(Intent.EXTRA_TEXT, shareText)
+                                            type = "text/plain"
+                                        }
+                                        val shareIntent = Intent.createChooser(sendIntent, null)
+                                        context.startActivity(shareIntent)
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "Partager cette application",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White // Writing in white
+                                )
+                            }
+
+                            HorizontalDivider(color = Color.White.copy(alpha = 0.3f), thickness = 0.5.dp)
+
+                            // Line 2: Version & Update
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f)
+                                    .clickable(enabled = isUpdateAvailable) {
+                                        if (isUpdateAvailable) {
+                                            uriHandler.openUri("https://github.com/jccdkct/Chronocoursejc2/releases/latest/download/chronocoursejc2.apk")
+                                        }
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = if (isUpdateAvailable) {
+                                        "Version ${BuildConfig.VERSION_NAME} - télécharger mise à jour $latestVersion"
+                                    } else {
+                                        "Version ${BuildConfig.VERSION_NAME} - Application à jour"
+                                    },
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center,
+                                    fontSize = 10.sp
+                                )
+                            }
                         }
                     }
                 }
