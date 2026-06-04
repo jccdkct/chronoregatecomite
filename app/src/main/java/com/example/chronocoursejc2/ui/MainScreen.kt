@@ -832,6 +832,7 @@ fun ArrivalList(
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
+    var showDuration by remember { mutableStateOf(true) }
     
     LaunchedEffect(arrivals.size) {
         if (arrivals.isNotEmpty()) {
@@ -847,17 +848,34 @@ fun ArrivalList(
             horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("", modifier = Modifier.width(28.dp)) // Narrower Delete column
+            Text("", modifier = Modifier.width(28.dp))
             VerticalSeparator()
-            Text("Rang", fontWeight = FontWeight.Bold, modifier = Modifier.width(32.dp), style = MaterialTheme.typography.labelSmall)
+            Text("Rang", fontWeight = FontWeight.Bold, modifier = Modifier.width(36.dp), style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
             VerticalSeparator()
-            Text("Duree", fontWeight = FontWeight.Bold, modifier = Modifier.width(72.dp), style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
+            
+            // Toggleable Column Header
+            Row(
+                modifier = Modifier.width(90.dp).clickable { showDuration = !showDuration },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = if (showDuration) "Durée" else "Heure",
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.labelSmall
+                )
+                Icon(
+                    imageVector = Icons.Rounded.SwapHoriz,
+                    contentDescription = null,
+                    modifier = Modifier.size(12.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+            
             VerticalSeparator()
-            Text("Heure", fontWeight = FontWeight.Bold, modifier = Modifier.width(72.dp), style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
+            Text("N° Voile", fontWeight = FontWeight.Bold, modifier = Modifier.width(90.dp), style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
             VerticalSeparator()
-            Text("N° Voile", fontWeight = FontWeight.Bold, modifier = Modifier.width(72.dp), style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
-            VerticalSeparator()
-            Text("", modifier = Modifier.width(40.dp)) // Narrower Edit column
+            Text("", modifier = Modifier.width(48.dp))
         }
         HorizontalDivider(thickness = 2.dp, color = Color.Black)
         LazyColumn(
@@ -866,7 +884,7 @@ fun ArrivalList(
         ) {
             items(
                 arrivals,
-                key = { it.id } // Stable key for smooth reordering/removal
+                key = { it.id }
             ) { arrival ->
                 val index = arrivals.indexOf(arrival)
                 ArrivalRow(
@@ -874,6 +892,7 @@ fun ArrivalList(
                     index = index, 
                     onEditClick = onEditClick, 
                     onToggleExclusion = onToggleExclusion,
+                    showDuration = showDuration,
                     modifier = Modifier.animateItem()
                 )
                 HorizontalDivider(thickness = 1.dp, color = Color.LightGray)
@@ -898,9 +917,10 @@ fun ArrivalRow(
     index: Int, 
     onEditClick: (Arrival) -> Unit, 
     onToggleExclusion: (Long) -> Unit,
+    showDuration: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val textStyle = MaterialTheme.typography.bodySmall.copy(
+    val textStyle = MaterialTheme.typography.bodyMedium.copy(
         fontWeight = FontWeight.Bold,
         fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
     )
@@ -933,30 +953,25 @@ fun ArrivalRow(
             Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(Color.Gray.copy(alpha = 0.3f)))
             Text(
                 text = if (arrival.isExcluded) "" else arrival.rank.toString(),
-                modifier = Modifier.width(32.dp),
+                modifier = Modifier.width(36.dp),
                 style = textStyle,
                 textAlign = TextAlign.Center
             )
             Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(Color.Gray.copy(alpha = 0.3f)))
+            
+            // Toggleable Data Column
             Text(
-                text = arrival.duration,
-                modifier = Modifier.width(72.dp),
+                text = if (showDuration) arrival.duration else arrival.arrivalTime,
+                modifier = Modifier.width(90.dp),
                 style = textStyle,
                 maxLines = 1,
                 textAlign = TextAlign.Center
             )
-            Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(Color.Gray.copy(alpha = 0.3f)))
-            Text(
-                text = arrival.arrivalTime,
-                modifier = Modifier.width(72.dp),
-                style = textStyle,
-                maxLines = 1,
-                textAlign = TextAlign.Center
-            )
+            
             Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(Color.Gray.copy(alpha = 0.3f)))
             Text(
                 text = arrival.sailNumber,
-                modifier = Modifier.width(72.dp),
+                modifier = Modifier.width(90.dp),
                 style = textStyle,
                 maxLines = 1,
                 textAlign = TextAlign.Center
@@ -964,7 +979,7 @@ fun ArrivalRow(
             Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(Color.Gray.copy(alpha = 0.3f)))
             Box(
                 modifier = Modifier
-                    .width(40.dp)
+                    .width(48.dp)
                     .fillMaxHeight()
                     .clickable { onEditClick(arrival) },
                 contentAlignment = Alignment.Center
@@ -972,7 +987,7 @@ fun ArrivalRow(
                 Image(
                     painter = painterResource(id = R.drawable.iconeedit),
                     contentDescription = "Éditer",
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(32.dp)
                 )
             }
         }
@@ -1018,7 +1033,7 @@ fun BottomButtons(
             Button(
                 onClick = onLeftClick,
                 modifier = Modifier
-                    .weight(1.15f)
+                    .weight(1.32f)
                     .height(64.dp), // Reduced height from 96.dp
                 shape = MaterialTheme.shapes.medium,
                 enabled = if (isInitial) true else isArrivalActive,
@@ -1048,7 +1063,7 @@ fun BottomButtons(
             Button(
                 onClick = onRightClick,
                 modifier = Modifier
-                    .weight(0.85f)
+                    .weight(0.68f)
                     .height(64.dp), // Reduced height from 96.dp
                 shape = MaterialTheme.shapes.medium,
                 enabled = true,
