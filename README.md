@@ -29,7 +29,7 @@ Ce projet est sous licence **MIT**. Voir le fichier [LICENSE](LICENSE) pour plus
 ## Démo Vidéo
 
 <p align="center">
-  <a href="screenshots/demo.mp4">
+  <a href="https://youtu.be/3mytdD7HXxo">
     <img src="screenshots/demo.jpg" width="400" alt="Cliquer pour voir la vidéo de démonstration" />
   </a>
 </p>
