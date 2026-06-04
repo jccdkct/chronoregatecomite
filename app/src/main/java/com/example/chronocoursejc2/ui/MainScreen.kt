@@ -849,15 +849,15 @@ fun ArrivalList(
         ) {
             Text("", modifier = Modifier.width(28.dp)) // Narrower Delete column
             VerticalSeparator()
-            Text("Rang", fontWeight = FontWeight.Bold, modifier = Modifier.width(36.dp), style = MaterialTheme.typography.labelSmall)
+            Text("Rang", fontWeight = FontWeight.Bold, modifier = Modifier.width(32.dp), style = MaterialTheme.typography.labelSmall)
             VerticalSeparator()
-            Text("Duree", fontWeight = FontWeight.Bold, modifier = Modifier.width(80.dp), style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
+            Text("Duree", fontWeight = FontWeight.Bold, modifier = Modifier.width(72.dp), style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
             VerticalSeparator()
-            Text("Heure", fontWeight = FontWeight.Bold, modifier = Modifier.width(80.dp), style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
+            Text("Heure", fontWeight = FontWeight.Bold, modifier = Modifier.width(72.dp), style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
             VerticalSeparator()
-            Text("N° Voile", fontWeight = FontWeight.Bold, modifier = Modifier.width(80.dp), style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
+            Text("N° Voile", fontWeight = FontWeight.Bold, modifier = Modifier.width(72.dp), style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
             VerticalSeparator()
-            Text("", modifier = Modifier.width(48.dp)) // Original width for Edit
+            Text("", modifier = Modifier.width(40.dp)) // Narrower Edit column
         }
         HorizontalDivider(thickness = 2.dp, color = Color.Black)
         LazyColumn(
@@ -900,7 +900,7 @@ fun ArrivalRow(
     onToggleExclusion: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val textStyle = MaterialTheme.typography.bodyMedium.copy(
+    val textStyle = MaterialTheme.typography.bodySmall.copy(
         fontWeight = FontWeight.Bold,
         fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
     )
@@ -933,14 +933,14 @@ fun ArrivalRow(
             Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(Color.Gray.copy(alpha = 0.3f)))
             Text(
                 text = if (arrival.isExcluded) "" else arrival.rank.toString(),
-                modifier = Modifier.width(36.dp),
+                modifier = Modifier.width(32.dp),
                 style = textStyle,
                 textAlign = TextAlign.Center
             )
             Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(Color.Gray.copy(alpha = 0.3f)))
             Text(
                 text = arrival.duration,
-                modifier = Modifier.width(80.dp),
+                modifier = Modifier.width(72.dp),
                 style = textStyle,
                 maxLines = 1,
                 textAlign = TextAlign.Center
@@ -948,7 +948,7 @@ fun ArrivalRow(
             Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(Color.Gray.copy(alpha = 0.3f)))
             Text(
                 text = arrival.arrivalTime,
-                modifier = Modifier.width(80.dp),
+                modifier = Modifier.width(72.dp),
                 style = textStyle,
                 maxLines = 1,
                 textAlign = TextAlign.Center
@@ -956,7 +956,7 @@ fun ArrivalRow(
             Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(Color.Gray.copy(alpha = 0.3f)))
             Text(
                 text = arrival.sailNumber,
-                modifier = Modifier.width(80.dp),
+                modifier = Modifier.width(72.dp),
                 style = textStyle,
                 maxLines = 1,
                 textAlign = TextAlign.Center
@@ -964,7 +964,7 @@ fun ArrivalRow(
             Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(Color.Gray.copy(alpha = 0.3f)))
             Box(
                 modifier = Modifier
-                    .width(48.dp)
+                    .width(40.dp)
                     .fillMaxHeight()
                     .clickable { onEditClick(arrival) },
                 contentAlignment = Alignment.Center
@@ -972,7 +972,7 @@ fun ArrivalRow(
                 Image(
                     painter = painterResource(id = R.drawable.iconeedit),
                     contentDescription = "Éditer",
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(24.dp)
                 )
             }
         }
