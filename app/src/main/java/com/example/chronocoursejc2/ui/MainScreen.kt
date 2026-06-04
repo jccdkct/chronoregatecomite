@@ -41,6 +41,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.chronocoursejc2.BuildConfig
 import com.example.chronocoursejc2.R
 import com.example.chronocoursejc2.ui.theme.Chronocoursejc2Theme
 import java.util.Locale
@@ -62,6 +63,8 @@ fun MainScreen(
     val lastSavedFileContent by viewModel.lastSavedFileContent.collectAsStateWithLifecycle()
     val savedFilesCount by viewModel.savedFilesCount.collectAsStateWithLifecycle()
     val selectedBeepTone by viewModel.selectedBeepTone.collectAsStateWithLifecycle()
+    val latestVersion by viewModel.latestVersion.collectAsStateWithLifecycle()
+    val isUpdateAvailable by viewModel.isUpdateAvailable.collectAsStateWithLifecycle()
 
     MainScreenContent(
         currentTime = currentTime,
@@ -77,6 +80,8 @@ fun MainScreen(
         lastSavedFileContent = lastSavedFileContent,
         savedFilesCount = savedFilesCount,
         selectedBeepTone = selectedBeepTone,
+        latestVersion = latestVersion,
+        isUpdateAvailable = isUpdateAvailable,
         onProcedureSelected = { viewModel.selectProcedure(it) },
         onStopAndSave = { viewModel.stopAndSave() },
         onResetRace = { viewModel.resetRace() },
@@ -104,6 +109,8 @@ fun MainScreenContent(
     lastSavedFileContent: String,
     savedFilesCount: Int,
     selectedBeepTone: Int,
+    latestVersion: String,
+    isUpdateAvailable: Boolean,
     onProcedureSelected: (Procedure) -> Unit,
     onStopAndSave: () -> Unit,
     onResetRace: () -> Unit,
@@ -126,7 +133,11 @@ fun MainScreenContent(
     val customGray = Color(0xFF909090)
 
     if (showProcedureDialog) {
-        ProcedureSelectionDialog(onProcedureSelected = onProcedureSelected)
+        ProcedureSelectionDialog(
+            latestVersion = latestVersion,
+            isUpdateAvailable = isUpdateAvailable,
+            onProcedureSelected = onProcedureSelected
+        )
     }
 
     if (showDeleteConfirm) {
@@ -425,7 +436,11 @@ fun MainScreenContent(
 }
 
 @Composable
-fun ProcedureSelectionDialog(onProcedureSelected: (Procedure) -> Unit) {
+fun ProcedureSelectionDialog(
+    latestVersion: String,
+    isUpdateAvailable: Boolean,
+    onProcedureSelected: (Procedure) -> Unit
+) {
     Dialog(
         onDismissRequest = { },
         properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -580,7 +595,42 @@ fun ProcedureSelectionDialog(onProcedureSelected: (Procedure) -> Unit) {
                                     Text("Quitter", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall)
                                 }
                             }
+                            
+                            Spacer(modifier = Modifier.height(32.dp)) // Space for the banner
                         }
+
+                    // Update Banner - Full Width at the bottom
+                    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(32.dp)
+                            .align(Alignment.BottomCenter)
+                            .clickable(enabled = isUpdateAvailable) {
+                                if (isUpdateAvailable) {
+                                    uriHandler.openUri("https://github.com/jccdkct/Chronocoursejc2/releases/latest/download/chronocoursejc2.apk")
+                                }
+                            },
+                        color = Color.Black,
+                        contentColor = Color.White
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Text(
+                                text = if (isUpdateAvailable) {
+                                    "Version ${BuildConfig.VERSION_NAME} - télécharger mise à jour $latestVersion"
+                                } else {
+                                    "Version ${BuildConfig.VERSION_NAME} - Application à jour"
+                                },
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -1262,6 +1312,8 @@ fun MainScreenSmallPreview() {
             lastSavedFileContent = "Application Chronocoursejc2\n...",
             savedFilesCount = 5,
             selectedBeepTone = android.media.ToneGenerator.TONE_CDMA_PIP,
+            latestVersion = "v009",
+            isUpdateAvailable = false,
             onProcedureSelected = {},
             onStopAndSave = {},
             onResetRace = {},
