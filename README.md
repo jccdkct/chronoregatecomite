@@ -26,6 +26,12 @@ Les contributions sont les bienvenues ! N'hésitez pas à ouvrir une *Issue* pou
 
 Ce projet est sous licence **MIT**. Voir le fichier [LICENSE](LICENSE) pour plus de détails.
 
+## Démo Vidéo
+
+<p align="center">
+  <video src="screenshots/demo%20video.mp4" width="400" controls></video>
+</p>
+
 ## Captures d'écran
 
 <p align="center">
