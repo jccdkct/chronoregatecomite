@@ -275,12 +275,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val startDateStr = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date(startTime))
                 append("Arrivees de la course dont le depart a eu lieu\n")
                 append("le $startDateStr à $startFormattedTime\n")
-                append("________________________________________________\n")
-                append(String.format(Locale.getDefault(), "%-6s  %-12s  %-12s  %s\n", "Rang", "Duree", "Heure", "N° Voile"))
-                append("________________________________________________\n")
+                append("______________________________________\n")
+                append(String.format(Locale.getDefault(), "%-4s  %-8s  %-8s  %s\n", "Rang", "Duree", "Heure", "N° Voile"))
+                append("______________________________________\n")
                 // Only export non-excluded arrivals
                 _arrivals.value.filter { !it.isExcluded }.sortedBy { it.rank }.forEach { arrival ->
-                    append(String.format(Locale.getDefault(), "%03d   %-12s  %-12s  %s\n", arrival.rank, arrival.duration, arrival.arrivalTime, arrival.sailNumber))
+                    append(String.format(Locale.getDefault(), " %03d  %-8s  %-8s  %s\n", arrival.rank, arrival.duration, arrival.arrivalTime, arrival.sailNumber))
                 }
             }
             _lastSavedFileContent.value = content
