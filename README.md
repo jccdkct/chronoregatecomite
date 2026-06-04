@@ -29,38 +29,7 @@ Ce projet est sous licence **MIT**. Voir le fichier [LICENSE](LICENSE) pour plus
 ## Démo Vidéo
 
 <p align="center">
-  <video src="screenshots/demo%20video.mp4" width="400" controls></video>
-</p>
-
-## Captures d'écran
-
-<p align="center">
-<img src="screenshots/Screenshot_20260602_225313-2.png" width="250" />
-<img src="screenshots/Screenshot_20260602_225313.png" width="250" />
-<img src="screenshots/Screenshot_20260602_225348.png" width="250" />
-<img src="screenshots/Screenshot_20260602_225357.png" width="250" />
-<img src="screenshots/Screenshot_20260602_225545.png" width="250" />
-<img src="screenshots/Screenshot_20260602_225659.png" width="250" />
-<img src="screenshots/Screenshot_20260602_230030.png" width="250" />
-<img src="screenshots/Screenshot_20260602_230133.png" width="250" />
-<img src="screenshots/Screenshot_20260602_230140.png" width="250" />
-<img src="screenshots/Screenshot_20260602_230145.png" width="250" />
-<img src="screenshots/Screenshot_20260602_230149.png" width="250" />
-<img src="screenshots/Screenshot_20260602_230155.png" width="250" />
-<img src="screenshots/Screenshot_20260602_230217--1.png" width="250" />
-<img src="screenshots/Screenshot_20260602_230221.png" width="250" />
-<img src="screenshots/Screenshot_20260602_230230.png" width="250" />
-<img src="screenshots/Screenshot_20260602_230238.png" width="250" />
-<img src="screenshots/Screenshot_20260602_233253_Firefox_installation__1ere.jpg" width="250" />
-<img src="screenshots/Screenshot_20260602_233306_Firefox.jpg" width="250" />
-<img src="screenshots/Screenshot_20260602_233320_Firefox.jpg" width="250" />
-<img src="screenshots/Screenshot_20260602_233332_Firefox.jpg" width="250" />
-<img src="screenshots/Screenshot_20260602_233343_Firefox.jpg" width="250" />
-<img src="screenshots/Screenshot_20260602_233346_Firefox.jpg" width="250" />
-<img src="screenshots/Screenshot_20260602_233353_Package%20installer.jpg" width="250" />
-<img src="screenshots/Screenshot_20260602_233401_Package%20installer.jpg" width="250" />
-<img src="screenshots/Screenshot_20260602_233409_Google%20Play%20Store.jpg" width="250" />
-<img src="screenshots/Screenshot_20260602_233415_Google%20Play%20Store.jpg" width="250" />
-<img src="screenshots/Screenshot_20260602_233430_Package%20installer.jpg" width="250" />
-<img src="screenshots/Screenshot_20260602_233437_Package%20installer_derniere.jpg" width="250" />
+  <a href="screenshots/demo.mp4">
+    <img src="screenshots/demo.jpg" width="400" alt="Cliquer pour voir la vidéo de démonstration" />
+  </a>
 </p>
