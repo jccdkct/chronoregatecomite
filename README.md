@@ -30,6 +30,6 @@ Ce projet est sous licence **MIT**. Voir le fichier [LICENSE](LICENSE) pour plus
 
 <p align="center">
   <a href="https://youtu.be/3mytdD7HXxo">
-    <img src="screenshots/demo.jpg" width="400" alt="Cliquer pour voir la vidéo de démonstration" />
+    <img src="screenshots/demo2.jpg" width="400" alt="Cliquer pour voir la vidéo de démonstration" />
   </a>
 </p>
