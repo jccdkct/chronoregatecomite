@@ -11,6 +11,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -82,6 +83,7 @@ fun MainScreen(
         onArrivalClick = { viewModel.recordArrival() },
         onTriggerStartAction = { viewModel.triggerStartAction() },
         onUpdateSail = { rank, sail -> viewModel.updateSailNumber(rank, sail) },
+        onToggleExclusion = { viewModel.toggleArrivalExclusion(it) },
         onRefreshFiles = { viewModel.updateSavedFilesCount() },
         onSetBeepTone = { viewModel.setBeepTone(it) }
     )
@@ -108,6 +110,7 @@ fun MainScreenContent(
     onArrivalClick: () -> Unit,
     onTriggerStartAction: () -> Unit,
     onUpdateSail: (Int, String) -> Unit,
+    onToggleExclusion: (Long) -> Unit,
     onRefreshFiles: () -> Unit,
     onSetBeepTone: (Int) -> Unit
 ) {
@@ -333,10 +336,11 @@ fun MainScreenContent(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            TopBar(currentTime, batteryPercentage, savedFilesCount, selectedBeepTone, onSetBeepTone)
+            TopBar(currentTime, batteryPercentage, selectedBeepTone, onSetBeepTone)
         },
         bottomBar = {
             Column(modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars)) {
+                Spacer(modifier = Modifier.height(16.dp)) // Extra space above buttons
                 BottomButtons(
                     raceState = raceState,
                     onLeftClick = {
@@ -409,7 +413,12 @@ fun MainScreenContent(
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 // The list now has weight(1f), expanding to cover the image
-                ArrivalList(arrivals, onEditClick = { editingSailForArrival = it }, modifier = Modifier.weight(1f))
+                ArrivalList(
+                    arrivals = arrivals, 
+                    onEditClick = { editingSailForArrival = it }, 
+                    onToggleExclusion = onToggleExclusion,
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
     }
@@ -604,7 +613,6 @@ fun ProcedureButton(
 fun TopBar(
     currentTime: String, 
     batteryPercentage: Int, 
-    savedFilesCount: Int,
     selectedBeepTone: Int,
     onSetBeepTone: (Int) -> Unit
 ) {
@@ -667,23 +675,6 @@ fun TopBar(
                     style = MaterialTheme.typography.titleMedium
                 )
                 
-                if (savedFilesCount > 0) {
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Surface(
-                        color = MaterialTheme.colorScheme.secondaryContainer,
-                        shape = MaterialTheme.shapes.extraSmall,
-                        modifier = Modifier.height(24.dp).padding(horizontal = 4.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text(
-                                text = "📂 $savedFilesCount",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                }
-
                 Spacer(modifier = Modifier.width(6.dp))
                 
                 // Cycling Luminosity Button
@@ -834,7 +825,12 @@ private fun formatTime(seconds: Long): String {
 }
 
 @Composable
-fun ArrivalList(arrivals: List<Arrival>, onEditClick: (Arrival) -> Unit, modifier: Modifier = Modifier) {
+fun ArrivalList(
+    arrivals: List<Arrival>, 
+    onEditClick: (Arrival) -> Unit, 
+    onToggleExclusion: (Long) -> Unit,
+    modifier: Modifier = Modifier
+) {
     val listState = rememberLazyListState()
     
     LaunchedEffect(arrivals.size) {
@@ -851,6 +847,8 @@ fun ArrivalList(arrivals: List<Arrival>, onEditClick: (Arrival) -> Unit, modifie
             horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            Text("", modifier = Modifier.width(28.dp)) // Narrower Delete column
+            VerticalSeparator()
             Text("Rang", fontWeight = FontWeight.Bold, modifier = Modifier.width(36.dp), style = MaterialTheme.typography.labelSmall)
             VerticalSeparator()
             Text("Duree", fontWeight = FontWeight.Bold, modifier = Modifier.width(80.dp), style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
@@ -859,15 +857,25 @@ fun ArrivalList(arrivals: List<Arrival>, onEditClick: (Arrival) -> Unit, modifie
             VerticalSeparator()
             Text("N° Voile", fontWeight = FontWeight.Bold, modifier = Modifier.width(80.dp), style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
             VerticalSeparator()
-            Text("", modifier = Modifier.width(40.dp))
+            Text("", modifier = Modifier.width(48.dp)) // Original width for Edit
         }
         HorizontalDivider(thickness = 2.dp, color = Color.Black)
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize()
         ) {
-            itemsIndexed(arrivals) { index, arrival ->
-                ArrivalRow(arrival, index, onEditClick)
+            items(
+                arrivals,
+                key = { it.id } // Stable key for smooth reordering/removal
+            ) { arrival ->
+                val index = arrivals.indexOf(arrival)
+                ArrivalRow(
+                    arrival = arrival, 
+                    index = index, 
+                    onEditClick = onEditClick, 
+                    onToggleExclusion = onToggleExclusion,
+                    modifier = Modifier.animateItem()
+                )
                 HorizontalDivider(thickness = 1.dp, color = Color.LightGray)
             }
         }
@@ -885,7 +893,13 @@ fun VerticalSeparator() {
 }
 
 @Composable
-fun ArrivalRow(arrival: Arrival, index: Int, onEditClick: (Arrival) -> Unit) {
+fun ArrivalRow(
+    arrival: Arrival, 
+    index: Int, 
+    onEditClick: (Arrival) -> Unit, 
+    onToggleExclusion: (Long) -> Unit,
+    modifier: Modifier = Modifier
+) {
     val textStyle = MaterialTheme.typography.bodyMedium.copy(
         fontWeight = FontWeight.Bold,
         fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
@@ -893,57 +907,89 @@ fun ArrivalRow(arrival: Arrival, index: Int, onEditClick: (Arrival) -> Unit) {
     
     val backgroundColor = if (index % 2 == 0) Color.White else Color(0xFFF9F9F9)
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(backgroundColor)
-            .height(IntrinsicSize.Min),
-        horizontalArrangement = Arrangement.Start,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = arrival.rank.toString(),
-            modifier = Modifier.width(36.dp),
-            style = textStyle,
-            textAlign = TextAlign.Center
-        )
-        Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(Color.Gray.copy(alpha = 0.3f)))
-        Text(
-            text = arrival.duration,
-            modifier = Modifier.width(80.dp),
-            style = textStyle,
-            maxLines = 1,
-            textAlign = TextAlign.Center
-        )
-        Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(Color.Gray.copy(alpha = 0.3f)))
-        Text(
-            text = arrival.arrivalTime,
-            modifier = Modifier.width(80.dp),
-            style = textStyle,
-            maxLines = 1,
-            textAlign = TextAlign.Center
-        )
-        Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(Color.Gray.copy(alpha = 0.3f)))
-        Text(
-            text = arrival.sailNumber,
-            modifier = Modifier.width(80.dp),
-            style = textStyle,
-            maxLines = 1,
-            textAlign = TextAlign.Center
-        )
-        Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(Color.Gray.copy(alpha = 0.3f)))
-        Box(
+    Box(modifier = modifier) {
+        Row(
             modifier = Modifier
-                .width(40.dp)
-                .fillMaxHeight()
-                .clickable { onEditClick(arrival) },
-            contentAlignment = Alignment.Center
+                .fillMaxWidth()
+                .background(backgroundColor)
+                .height(IntrinsicSize.Min),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.iconeedit),
-                contentDescription = "Éditer",
-                modifier = Modifier.size(32.dp)
+            Box(
+                modifier = Modifier
+                    .width(28.dp)
+                    .fillMaxHeight()
+                    .clickable { onToggleExclusion(arrival.id) },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = if (arrival.isExcluded) Icons.Rounded.Refresh else Icons.Rounded.Close,
+                    contentDescription = if (arrival.isExcluded) "Rétablir" else "Supprimer",
+                    modifier = Modifier.size(20.dp),
+                    tint = if (arrival.isExcluded) Color(0xFF003333) else Color(0xFF771010)
+                )
+            }
+            Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(Color.Gray.copy(alpha = 0.3f)))
+            Text(
+                text = if (arrival.isExcluded) "" else arrival.rank.toString(),
+                modifier = Modifier.width(36.dp),
+                style = textStyle,
+                textAlign = TextAlign.Center
             )
+            Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(Color.Gray.copy(alpha = 0.3f)))
+            Text(
+                text = arrival.duration,
+                modifier = Modifier.width(80.dp),
+                style = textStyle,
+                maxLines = 1,
+                textAlign = TextAlign.Center
+            )
+            Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(Color.Gray.copy(alpha = 0.3f)))
+            Text(
+                text = arrival.arrivalTime,
+                modifier = Modifier.width(80.dp),
+                style = textStyle,
+                maxLines = 1,
+                textAlign = TextAlign.Center
+            )
+            Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(Color.Gray.copy(alpha = 0.3f)))
+            Text(
+                text = arrival.sailNumber,
+                modifier = Modifier.width(80.dp),
+                style = textStyle,
+                maxLines = 1,
+                textAlign = TextAlign.Center
+            )
+            Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(Color.Gray.copy(alpha = 0.3f)))
+            Box(
+                modifier = Modifier
+                    .width(48.dp)
+                    .fillMaxHeight()
+                    .clickable { onEditClick(arrival) },
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.iconeedit),
+                    contentDescription = "Éditer",
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+        }
+
+        // RED STRIKE-THROUGH LINE when excluded
+        if (arrival.isExcluded) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(Color.Red.copy(alpha = 0.15f))
+            ) {
+                HorizontalDivider(
+                    modifier = Modifier.align(Alignment.Center),
+                    thickness = 3.dp,
+                    color = Color.Red
+                )
+            }
         }
     }
 }
@@ -973,7 +1019,7 @@ fun BottomButtons(
                 onClick = onLeftClick,
                 modifier = Modifier
                     .weight(1.15f)
-                    .height(96.dp),
+                    .height(64.dp), // Reduced height from 96.dp
                 shape = MaterialTheme.shapes.medium,
                 enabled = if (isInitial) true else isArrivalActive,
                 colors = ButtonDefaults.buttonColors(
@@ -985,7 +1031,7 @@ fun BottomButtons(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = if (isInitial) "Démarrer" else "Arrivée d'un concurrent",
+                        text = if (isInitial) "Démarrer" else "Arrivée concurrent",
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.labelLarge
                     )
@@ -1003,7 +1049,7 @@ fun BottomButtons(
                 onClick = onRightClick,
                 modifier = Modifier
                     .weight(0.85f)
-                    .height(96.dp),
+                    .height(64.dp), // Reduced height from 96.dp
                 shape = MaterialTheme.shapes.medium,
                 enabled = true,
                 colors = ButtonDefaults.buttonColors(
@@ -1048,9 +1094,10 @@ fun SailNumberEntryDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "N° Voile - Rang $rank",
+                        text = "N° de Voile\nRang $rank",
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        lineHeight = 24.sp
                     )
                     
                     Button(
@@ -1086,6 +1133,7 @@ fun SailNumberEntryDialog(
                 ) {
                     if (isNumeric) {
                         val keys = listOf(
+                            listOf("FRA", "GBR", "BEL", "NED"),
                             listOf("1", "2", "3"),
                             listOf("4", "5", "6"),
                             listOf("7", "8", "9"),
@@ -1097,10 +1145,11 @@ fun SailNumberEntryDialog(
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 row.forEach { key ->
-                                    KeypadButton(key, modifier = Modifier.weight(1f)) {
+                                    KeypadButton(key, modifier = Modifier.weight(1f), isSmall = key.length > 1) {
                                         when (key) {
                                             "EFF" -> currentValue = ""
                                             "⌫" -> if (currentValue.isNotEmpty()) currentValue = currentValue.dropLast(1)
+                                            "FRA", "GBR", "BEL", "NED" -> if (currentValue.length < 12) currentValue += key
                                             else -> if (currentValue.length < 12) currentValue += key
                                         }
                                     }
@@ -1108,7 +1157,7 @@ fun SailNumberEntryDialog(
                             }
                         }
                     } else {
-                        // Alpha Keypad (Uppercase)
+                        // Alpha Keypad (Alphabetical Layout)
                         val alphabet = ('A'..'Z').map { it.toString() } + listOf(" ", "EFF", "⌫")
                         val rows = alphabet.chunked(5)
                         rows.forEach { row ->
@@ -1170,7 +1219,7 @@ fun KeypadButton(
         shape = MaterialTheme.shapes.small,
         colors = if (text == "EFF" || text == "⌫")
             ButtonDefaults.buttonColors(containerColor = Color(0xFF771010))
-            else ButtonDefaults.buttonColors(containerColor = Color(0xFF003333))
+            else ButtonDefaults.buttonColors(containerColor = Color(0xFF505050))
     ) {
         Text(
             text = text, 
@@ -1187,7 +1236,7 @@ fun MainScreenSmallPreview() {
         MainScreenContent(
             currentTime = "10:30:00",
             batteryPercentage = 85,
-            arrivals = listOf(Arrival(1, "00:10:05", "10:40:05", "123456")),
+            arrivals = listOf(Arrival(1L, 1, "00:10:05", "10:40:05", "123456")),
             raceState = RaceState.RUNNING,
             remainingTime = 0,
             elapsedTime = 605,
@@ -1204,6 +1253,7 @@ fun MainScreenSmallPreview() {
             onArrivalClick = {},
             onTriggerStartAction = {},
             onUpdateSail = { _, _ -> },
+            onToggleExclusion = {},
             onRefreshFiles = {},
             onSetBeepTone = {}
         )

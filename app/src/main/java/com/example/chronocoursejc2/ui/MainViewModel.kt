@@ -218,20 +218,39 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val now = System.currentTimeMillis()
         val durationMillis = now - startTime
         val arrivalTime = formatTimeFull(Date(now))
-        val rank = _arrivals.value.size + 1
         
         val newArrival = Arrival(
-            rank = rank,
+            id = System.nanoTime(),
+            rank = 0, // Will be set by refreshRanks
             duration = formatDuration(durationMillis),
             arrivalTime = arrivalTime,
             sailNumber = ""
         )
         _arrivals.value = _arrivals.value + listOf(newArrival)
+        refreshRanks()
     }
 
     fun updateSailNumber(rank: Int, sailNumber: String) {
         _arrivals.value = _arrivals.value.map {
             if (it.rank == rank) it.copy(sailNumber = sailNumber) else it
+        }
+    }
+
+    fun toggleArrivalExclusion(arrivalId: Long) {
+        _arrivals.value = _arrivals.value.map {
+            if (it.id == arrivalId) it.copy(isExcluded = !it.isExcluded) else it
+        }
+        refreshRanks()
+    }
+
+    private fun refreshRanks() {
+        var currentRank = 1
+        _arrivals.value = _arrivals.value.map { arrival ->
+            if (arrival.isExcluded) {
+                arrival.copy(rank = 0)
+            } else {
+                arrival.copy(rank = currentRank++)
+            }
         }
     }
 
@@ -259,7 +278,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 append("________________________________________________\n")
                 append(String.format(Locale.getDefault(), "%-6s  %-12s  %-12s  %s\n", "Rang", "Duree", "Heure", "N° Voile"))
                 append("________________________________________________\n")
-                _arrivals.value.sortedBy { it.rank }.forEach { arrival ->
+                // Only export non-excluded arrivals
+                _arrivals.value.filter { !it.isExcluded }.sortedBy { it.rank }.forEach { arrival ->
                     append(String.format(Locale.getDefault(), "%03d   %-12s  %-12s  %s\n", arrival.rank, arrival.duration, arrival.arrivalTime, arrival.sailNumber))
                 }
             }
@@ -331,8 +351,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 }
 
 data class Arrival(
+    val id: Long,
     val rank: Int,
     val duration: String,
     val arrivalTime: String,
-    val sailNumber: String = ""
+    val sailNumber: String = "",
+    val isExcluded: Boolean = false
 )
