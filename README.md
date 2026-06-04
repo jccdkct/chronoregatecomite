@@ -2,6 +2,8 @@
 
 Chronocoursejc2 est une application de chronométrage de haute précision spécialement conçue pour les **régates nautiques** (voiliers, dériveur, planche à voile, etc.). Elle permet aux officiels de course de gérer les procédures de départ normalisées, de suivre les arrivées en temps réel et d'exporter les résultats officiels.
 
+**Prérequis :** Compatible avec tous les appareils sous **Android 7.0 (Nougat) ou supérieur** (SDK 24+).
+
 ## Fonctionnalités pour les Régates
 
 *   **Procédures de Départ Normalisées :** Supporte les séquences de compte à rebours "3 2 1 0", "5 4 1 0", "6 4 1 0", "8 4 1 0" et "10 4 1 0" avec bips sonores synchronisés pour signaler les étapes clés du départ.
