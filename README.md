@@ -12,6 +12,16 @@ Chronocoursejc2 est une application de chronométrage de haute précision spéci
 *   **Exportation des Résultats :** Génération automatique d'un fichier texte formaté dans le dossier `Téléchargements` pour une transmission rapide des résultats.
 *   **Optimisation pour le Terrain :** Luminosité forcée à 100% et écran toujours allumé pour une lisibilité maximale en extérieur, même sous plein soleil.
 
+## Dernières Améliorations (Version v013)
+
+*   **Gestion des Non-Classés :** Ajout d'un système complet pour gérer les concurrents n'ayant pas franchi la ligne normalement.
+    *   **Codes officiels :** Support des codes DNC, DNS, OCS, BFD, UFD, DNF, NSC, RET, DSQ avec descriptions détaillées.
+    *   **Interface dédiée :** Touches violettes distinctives et regroupement automatique des non-classés en fin de listing.
+    *   **Édition interactive :** Possibilité de modifier le code de classement via une icône dédiée directement dans le tableau.
+*   **Exclusion Réversible :** Système de "barré" permettant d'exclure temporairement une arrivée sans la supprimer, avec recalcul dynamique des rangs de la flotte.
+*   **Affichage Dynamique :** Colonne centrale basculable entre **Durée de course** et **Heure d'arrivée** pour un gain de place et une meilleure lisibilité.
+*   **Partage Direct :** Nouveau bandeau dans le dialogue de départ pour partager l'application ou télécharger les dernières mises à jour GitHub.
+
 ## Installation & Utilisation
 
 1.  **Téléchargement :** Clonez ce dépôt ou téléchargez l'APK depuis la section [Releases](https://github.com/jccdkct/Chronocoursejc2/releases) (si disponible).

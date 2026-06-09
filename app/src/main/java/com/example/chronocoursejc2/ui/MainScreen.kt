@@ -89,6 +89,8 @@ fun MainScreen(
         onTriggerStartAction = { viewModel.triggerStartAction() },
         onUpdateSail = { rank, sail -> viewModel.updateSailNumber(rank, sail) },
         onToggleExclusion = { viewModel.toggleArrivalExclusion(it) },
+        onrecordNonClassified = { code, sail -> viewModel.recordNonClassified(code, sail) },
+        onUpdateNonClassifiedCode = { id, code -> viewModel.updateNonClassifiedCode(id, code) },
         onRefreshFiles = { viewModel.updateSavedFilesCount() },
         onSetBeepTone = { viewModel.setBeepTone(it) }
     )
@@ -118,6 +120,8 @@ fun MainScreenContent(
     onTriggerStartAction: () -> Unit,
     onUpdateSail: (Int, String) -> Unit,
     onToggleExclusion: (Long) -> Unit,
+    onrecordNonClassified: (String, String) -> Unit,
+    onUpdateNonClassifiedCode: (Long, String) -> Unit,
     onRefreshFiles: () -> Unit,
     onSetBeepTone: (Int) -> Unit
 ) {
@@ -127,10 +131,52 @@ fun MainScreenContent(
     var forceShowPostRaceDialog by remember { mutableStateOf(false) }
     var editingSailForArrival by remember { mutableStateOf<Arrival?>(null) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showNonClassifiedCodeDialog by remember { mutableStateOf(false) }
+    var pendingNonClassifiedCode by remember { mutableStateOf<String?>(null) }
+    var showNonClassifiedSailDialog by remember { mutableStateOf(false) }
+    var editingCodeForArrival by remember { mutableStateOf<Arrival?>(null) }
 
     val customDeepTeal = Color(0xFF003333)
     val customDarkRed = Color(0xFF771010)
     val customGray = Color(0xFF909090)
+
+    if (showNonClassifiedCodeDialog || editingCodeForArrival != null) {
+        NonClassifiedCodeDialog(
+            initialValue = editingCodeForArrival?.duration ?: "",
+            onConfirm = { code ->
+                if (editingCodeForArrival != null) {
+                    onUpdateNonClassifiedCode(editingCodeForArrival!!.id, code)
+                    editingCodeForArrival = null
+                } else {
+                    pendingNonClassifiedCode = code
+                    showNonClassifiedCodeDialog = false
+                    showNonClassifiedSailDialog = true
+                }
+            },
+            onDismiss = { 
+                showNonClassifiedCodeDialog = false 
+                editingCodeForArrival = null
+            }
+        )
+    }
+
+    if (showNonClassifiedSailDialog) {
+        SailNumberEntryDialog(
+            initialValue = "",
+            rank = 0, // Visual only
+            onConfirm = { _, sail ->
+                pendingNonClassifiedCode?.let { code ->
+                    onrecordNonClassified(code, sail)
+                }
+                showNonClassifiedSailDialog = false
+                pendingNonClassifiedCode = null
+            },
+            onDismiss = { 
+                showNonClassifiedSailDialog = false
+                pendingNonClassifiedCode = null
+            }
+        )
+    }
 
     if (showProcedureDialog) {
         ProcedureSelectionDialog(
@@ -371,6 +417,7 @@ fun MainScreenContent(
                             showStopDialog = true
                         }
                     },
+                    onNonClassifiedClick = { showNonClassifiedCodeDialog = true },
                     deepTealColor = customDeepTeal,
                     darkRedColor = customDarkRed
                 )
@@ -427,6 +474,7 @@ fun MainScreenContent(
                 ArrivalList(
                     arrivals = arrivals, 
                     onEditClick = { editingSailForArrival = it }, 
+                    onEditCodeClick = { editingCodeForArrival = it },
                     onToggleExclusion = onToggleExclusion,
                     modifier = Modifier.weight(1f)
                 )
@@ -915,12 +963,19 @@ private fun formatTime(seconds: Long): String {
 fun ArrivalList(
     arrivals: List<Arrival>, 
     onEditClick: (Arrival) -> Unit, 
+    onEditCodeClick: (Arrival) -> Unit,
     onToggleExclusion: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
     var showDuration by remember { mutableStateOf(true) }
     
+    // Sort: Classified first (by rank), then Non-Classified (by ID/entry time)
+    val sortedArrivals = arrivals.sortedWith(
+        compareByDescending<Arrival> { it.isClassified }
+            .thenBy { it.id }
+    )
+
     LaunchedEffect(arrivals.size) {
         if (arrivals.isNotEmpty()) {
             listState.animateScrollToItem(arrivals.size - 1)
@@ -970,14 +1025,15 @@ fun ArrivalList(
             modifier = Modifier.fillMaxSize()
         ) {
             items(
-                arrivals,
+                sortedArrivals,
                 key = { it.id }
             ) { arrival ->
-                val index = arrivals.indexOf(arrival)
+                val index = sortedArrivals.indexOf(arrival)
                 ArrivalRow(
                     arrival = arrival, 
                     index = index, 
                     onEditClick = onEditClick, 
+                    onEditCodeClick = onEditCodeClick,
                     onToggleExclusion = onToggleExclusion,
                     showDuration = showDuration,
                     modifier = Modifier.animateItem()
@@ -1003,14 +1059,17 @@ fun ArrivalRow(
     arrival: Arrival, 
     index: Int, 
     onEditClick: (Arrival) -> Unit, 
+    onEditCodeClick: (Arrival) -> Unit,
     onToggleExclusion: (Long) -> Unit,
     showDuration: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val textStyle = MaterialTheme.typography.bodyMedium.copy(
+    val violetColor = Color(0xFF8A2BE2)
+    val baseTextStyle = MaterialTheme.typography.bodyMedium.copy(
         fontWeight = FontWeight.Bold,
         fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
     )
+    val textStyle = if (arrival.isClassified) baseTextStyle else baseTextStyle.copy(color = violetColor)
     
     val backgroundColor = if (index % 2 == 0) Color.White else Color(0xFFF9F9F9)
 
@@ -1038,28 +1097,46 @@ fun ArrivalRow(
                 )
             }
             Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(Color.Gray.copy(alpha = 0.3f)))
+            
+            // RANG COLUMN: Show code if non-classified
             Text(
-                text = if (arrival.isExcluded) "" else arrival.rank.toString(),
+                text = if (arrival.isExcluded) "" else (if (arrival.isClassified) arrival.rank.toString() else arrival.duration),
                 modifier = Modifier.width(36.dp),
-                style = textStyle,
+                style = textStyle.copy(fontSize = if (arrival.isClassified) 14.sp else 10.sp),
                 textAlign = TextAlign.Center
             )
             Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(Color.Gray.copy(alpha = 0.3f)))
             
-            // Toggleable Data Column
-            Text(
-                text = if (showDuration) arrival.duration else arrival.arrivalTime,
-                modifier = Modifier.width(90.dp),
-                style = textStyle,
-                maxLines = 1,
-                textAlign = TextAlign.Center
-            )
+            // DATA COLUMN / EDIT CODE BUTTON
+            if (arrival.isClassified) {
+                Text(
+                    text = if (showDuration) arrival.duration else arrival.arrivalTime,
+                    modifier = Modifier.width(90.dp),
+                    style = textStyle,
+                    maxLines = 1,
+                    textAlign = TextAlign.Center
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .width(90.dp)
+                        .fillMaxHeight()
+                        .clickable { onEditCodeClick(arrival) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.iconeeditviolet),
+                        contentDescription = "Éditer Code",
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+            }
             
             Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(Color.Gray.copy(alpha = 0.3f)))
             Text(
                 text = arrival.sailNumber,
                 modifier = Modifier.width(90.dp),
-                style = textStyle,
+                style = baseTextStyle,
                 maxLines = 1,
                 textAlign = TextAlign.Center
             )
@@ -1101,6 +1178,7 @@ fun BottomButtons(
     raceState: RaceState,
     onLeftClick: () -> Unit,
     onRightClick: () -> Unit,
+    onNonClassifiedClick: () -> Unit,
     deepTealColor: Color,
     darkRedColor: Color
 ) {
@@ -1117,11 +1195,12 @@ fun BottomButtons(
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // Left Button (Large)
             Button(
                 onClick = onLeftClick,
                 modifier = Modifier
                     .weight(1.32f)
-                    .height(64.dp), // Reduced height from 96.dp
+                    .height(64.dp),
                 shape = MaterialTheme.shapes.medium,
                 enabled = if (isInitial) true else isArrivalActive,
                 colors = ButtonDefaults.buttonColors(
@@ -1147,19 +1226,42 @@ fun BottomButtons(
                 }
             }
 
-            Button(
-                onClick = onRightClick,
-                modifier = Modifier
-                    .weight(0.68f)
-                    .height(64.dp), // Reduced height from 96.dp
-                shape = MaterialTheme.shapes.medium,
-                enabled = true,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = darkRedColor,
-                    contentColor = Color.White
-                )
+            // Right Column (Two buttons)
+            Column(
+                modifier = Modifier.weight(0.68f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Text("Arrêter", textAlign = TextAlign.Center, style = MaterialTheme.typography.labelLarge)
+                // Non-Classified Button (Half height)
+                Button(
+                    onClick = onNonClassifiedClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(30.dp),
+                    shape = MaterialTheme.shapes.small,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = deepTealColor,
+                        contentColor = Color.White
+                    ),
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Text("+ non classé", style = MaterialTheme.typography.labelSmall, fontSize = 10.sp)
+                }
+
+                // Stop Button (Half height)
+                Button(
+                    onClick = onRightClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(30.dp),
+                    shape = MaterialTheme.shapes.small,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = darkRedColor,
+                        contentColor = Color.White
+                    ),
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Text("Arrêter", style = MaterialTheme.typography.labelSmall, fontSize = 10.sp)
+                }
             }
         }
     }
@@ -1308,6 +1410,132 @@ fun SailNumberEntryDialog(
 }
 
 @Composable
+fun NonClassifiedCodeDialog(
+    initialValue: String,
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var currentValue by remember { mutableStateOf(initialValue) }
+    val codes = listOf(
+        "DNC" to "Did Not Come",
+        "DNS" to "Did Not Start",
+        "OCS" to "On Course Side",
+        "BFD" to "Black Flag Disq.",
+        "UFD" to "U Flag Disq.",
+        "DNF" to "Did Not Finish",
+        "NSC" to "Did Not Sail Course",
+        "RET" to "Retired",
+        "DSQ" to "Disqualified"
+    )
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.surface
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "Code Classement",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                
+                // Result Area (Similar to sail keypad)
+                Surface(
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    border = androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(text = currentValue, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
+                    }
+                }
+
+                Column(
+                    modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Predefined Codes with Descriptions
+                    codes.chunked(3).forEach { row ->
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            row.forEach { (code, desc) ->
+                                Button(
+                                    onClick = { currentValue = code },
+                                    modifier = Modifier.weight(1f).height(74.dp),
+                                    shape = MaterialTheme.shapes.medium,
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF505050)),
+                                    contentPadding = PaddingValues(2.dp)
+                                ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(code, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
+                                        Text(
+                                            text = desc, 
+                                            style = MaterialTheme.typography.labelSmall, 
+                                            fontSize = 11.sp, 
+                                            textAlign = TextAlign.Center, 
+                                            lineHeight = 12.sp,
+                                            maxLines = 2
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    HorizontalDivider(thickness = 1.dp, color = Color.Gray.copy(alpha = 0.5f))
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Alphabet Keypad
+                    val alphabet = ('A'..'Z').map { it.toString() } + listOf(" ", "EFF", "⌫")
+                    alphabet.chunked(6).forEach { row ->
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            row.forEach { key ->
+                                KeypadButton(
+                                    text = key, 
+                                    modifier = Modifier.weight(1f).height(45.dp),
+                                    isSmall = true
+                                ) {
+                                    when (key) {
+                                        "EFF" -> currentValue = ""
+                                        "⌫" -> if (currentValue.isNotEmpty()) currentValue = currentValue.dropLast(1)
+                                        else -> if (currentValue.length < 8) currentValue += key
+                                    }
+                                }
+                            }
+                            // Fill empty slots in last row if needed
+                            if (row.size < 6) {
+                                repeat(6 - row.size) { Spacer(modifier = Modifier.weight(1f)) }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
+                }
+
+                Row(modifier = Modifier.fillMaxWidth().height(60.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = onDismiss, modifier = Modifier.weight(1f).fillMaxHeight(), colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)) {
+                        Text("Annuler", fontWeight = FontWeight.Bold)
+                    }
+                    Button(onClick = { onConfirm(currentValue) }, modifier = Modifier.weight(1f).fillMaxHeight(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF003333))) {
+                        Text("Valider", fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun KeypadButton(
     text: String,
     modifier: Modifier = Modifier,
@@ -1330,8 +1558,6 @@ fun KeypadButton(
         )
     }
 }
-
-@Preview(showBackground = true, device = "spec:width=360dp,height=740dp,dpi=311")
 @Composable
 fun MainScreenSmallPreview() {
     Chronocoursejc2Theme {
@@ -1358,6 +1584,8 @@ fun MainScreenSmallPreview() {
             onTriggerStartAction = {},
             onUpdateSail = { _, _ -> },
             onToggleExclusion = {},
+            onrecordNonClassified = { _, _ -> },
+            onUpdateNonClassifiedCode = { _, _ -> },
             onRefreshFiles = {},
             onSetBeepTone = {}
         )

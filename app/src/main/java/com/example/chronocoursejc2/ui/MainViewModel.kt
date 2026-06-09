@@ -270,9 +270,35 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         refreshRanks()
     }
 
+    fun recordNonClassified(code: String, sailNumber: String) {
+        val newArrival = Arrival(
+            id = System.nanoTime(),
+            rank = 0,
+            duration = code,
+            arrivalTime = code,
+            sailNumber = sailNumber,
+            isClassified = false
+        )
+        _arrivals.value = _arrivals.value + listOf(newArrival)
+        // Ranks for non-classified stay 0, classified ones are re-ranked
+        refreshRanks()
+    }
+
     fun updateSailNumber(rank: Int, sailNumber: String) {
         _arrivals.value = _arrivals.value.map {
-            if (it.rank == rank) it.copy(sailNumber = sailNumber) else it
+            if (it.rank == rank && it.isClassified) it.copy(sailNumber = sailNumber) else it
+        }
+    }
+
+    fun updateNonClassifiedSail(id: Long, sailNumber: String) {
+        _arrivals.value = _arrivals.value.map {
+            if (it.id == id) it.copy(sailNumber = sailNumber) else it
+        }
+    }
+
+    fun updateNonClassifiedCode(id: Long, code: String) {
+        _arrivals.value = _arrivals.value.map {
+            if (it.id == id) it.copy(duration = code, arrivalTime = code) else it
         }
     }
 
@@ -286,7 +312,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private fun refreshRanks() {
         var currentRank = 1
         _arrivals.value = _arrivals.value.map { arrival ->
-            if (arrival.isExcluded) {
+            if (arrival.isExcluded || !arrival.isClassified) {
                 arrival.copy(rank = 0)
             } else {
                 arrival.copy(rank = currentRank++)
@@ -318,9 +344,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 append("______________________________________\n")
                 append(String.format(Locale.getDefault(), "%-4s  %-8s  %-8s  %s\n", "Rang", "Duree", "Heure", "N° Voile"))
                 append("______________________________________\n")
-                // Only export non-excluded arrivals
-                _arrivals.value.filter { !it.isExcluded }.sortedBy { it.rank }.forEach { arrival ->
-                    append(String.format(Locale.getDefault(), " %03d  %-8s  %-8s  %s\n", arrival.rank, arrival.duration, arrival.arrivalTime, arrival.sailNumber))
+                _arrivals.value.filter { !it.isExcluded }.sortedWith(
+                    compareByDescending<Arrival> { it.isClassified }
+                        .thenBy { it.id }
+                ).forEach { arrival ->
+                    if (arrival.isClassified) {
+                        val rankStr = String.format(Locale.getDefault(), " %03d", arrival.rank)
+                        append(String.format(Locale.getDefault(), "%s  %-8s  %-8s  %s\n", rankStr, arrival.duration, arrival.arrivalTime, arrival.sailNumber))
+                    } else {
+                        // Non-classified: code (stored in duration) in the rank column, empty time columns
+                        val codeStr = String.format(Locale.getDefault(), " %-3s", arrival.duration)
+                        append(String.format(Locale.getDefault(), "%s  %-8s  %-8s  %s\n", codeStr, "", "", arrival.sailNumber))
+                    }
                 }
             }
             _lastSavedFileContent.value = content
@@ -396,5 +431,6 @@ data class Arrival(
     val duration: String,
     val arrivalTime: String,
     val sailNumber: String = "",
-    val isExcluded: Boolean = false
+    val isExcluded: Boolean = false,
+    val isClassified: Boolean = true
 )
