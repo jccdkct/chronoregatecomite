@@ -1,4 +1,4 @@
-package com.example.chronocoursejc2
+package com.jccdkct.chronoregatecomite
 
 import android.content.Context
 import android.content.pm.ActivityInfo
@@ -14,10 +14,10 @@ import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
-import com.example.chronocoursejc2.ui.MainScreen
-import com.example.chronocoursejc2.ui.MainViewModel
-import com.example.chronocoursejc2.ui.RaceState
-import com.example.chronocoursejc2.ui.theme.Chronocoursejc2Theme
+import com.jccdkct.chronoregatecomite.ui.MainScreen
+import com.jccdkct.chronoregatecomite.ui.MainViewModel
+import com.jccdkct.chronoregatecomite.ui.RaceState
+import com.jccdkct.chronoregatecomite.ui.theme.ChronoRegateComiteTheme
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -43,7 +43,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         
         setContent {
-            Chronocoursejc2Theme {
+            ChronoRegateComiteTheme {
                 val backStack = rememberNavBackStack(Home)
                 NavDisplay(
                     backStack = backStack,

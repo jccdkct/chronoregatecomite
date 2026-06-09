@@ -1,4 +1,4 @@
-package com.example.chronocoursejc2.ui.theme
+package com.jccdkct.chronoregatecomite.ui.theme
 
 import android.app.Activity
 import android.os.Build
@@ -27,7 +27,7 @@ private val LightColorScheme = lightColorScheme(
 )
 
 @Composable
-fun Chronocoursejc2Theme(
+fun ChronoRegateComiteTheme(
     darkTheme: Boolean = false,
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = false,

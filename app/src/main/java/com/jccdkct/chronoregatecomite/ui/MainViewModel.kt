@@ -1,4 +1,4 @@
-package com.example.chronocoursejc2.ui
+package com.jccdkct.chronoregatecomite.ui
 
 import android.app.Application
 import android.content.BroadcastReceiver
@@ -24,15 +24,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
-import java.net.HttpURLConnection
-import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import org.json.JSONObject
-import com.example.chronocoursejc2.BuildConfig
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 enum class RaceState {
     IDLE, READY, COUNTDOWN, RUNNING, STOPPED
@@ -50,6 +44,8 @@ enum class Procedure(val totalSeconds: Long, val milestones: List<Long>, val lab
 }
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val prefs: SharedPreferences = application.getSharedPreferences("ChronoPrefs", Context.MODE_PRIVATE)
 
     private val _currentTime = MutableStateFlow(getCurrentFormattedTime())
     val currentTime: StateFlow<String> = _currentTime.asStateFlow()
@@ -87,8 +83,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _savedFilesCount = MutableStateFlow(0)
     val savedFilesCount: StateFlow<Int> = _savedFilesCount.asStateFlow()
 
-    private val prefs: SharedPreferences = application.getSharedPreferences("ChronoPrefs", Context.MODE_PRIVATE)
-
     private val _selectedBeepTone = MutableStateFlow(prefs.getInt("beepTone", ToneGenerator.TONE_CDMA_PIP))
     val selectedBeepTone: StateFlow<Int> = _selectedBeepTone.asStateFlow()
 
@@ -97,12 +91,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _brightnessLevel = MutableStateFlow(prefs.getInt("brightnessLevel", 100))
     val brightnessLevel: StateFlow<Int> = _brightnessLevel.asStateFlow()
-
-    private val _latestVersion = MutableStateFlow(BuildConfig.VERSION_NAME)
-    val latestVersion: StateFlow<String> = _latestVersion.asStateFlow()
-
-    private val _isUpdateAvailable = MutableStateFlow(false)
-    val isUpdateAvailable: StateFlow<Boolean> = _isUpdateAvailable.asStateFlow()
 
     private var raceJob: Job? = null
     private var startTime: Long = 0L
@@ -131,34 +119,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
         application.registerReceiver(batteryReceiver, filter)
         updateSavedFilesCount()
-        checkForUpdates()
-    }
-
-    private fun checkForUpdates() {
-        viewModelScope.launch {
-            try {
-                val latestTag = withContext(Dispatchers.IO) {
-                    val url = URL("https://api.github.com/repos/jccdkct/Chronocoursejc2/releases/latest")
-                    val connection = url.openConnection() as HttpURLConnection
-                    connection.requestMethod = "GET"
-                    connection.setRequestProperty("Accept", "application/vnd.github.v3+json")
-                    
-                    if (connection.responseCode == HttpURLConnection.HTTP_OK) {
-                        val response = connection.inputStream.bufferedReader().use { it.readText() }
-                        JSONObject(response).getString("tag_name")
-                    } else {
-                        null
-                    }
-                }
-                
-                if (latestTag != null) {
-                    _latestVersion.value = latestTag
-                    _isUpdateAvailable.value = latestTag > BuildConfig.VERSION_NAME
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
     }
 
     fun updateSavedFilesCount() {

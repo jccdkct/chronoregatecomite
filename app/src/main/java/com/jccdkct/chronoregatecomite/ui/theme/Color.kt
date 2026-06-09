@@ -1,4 +1,4 @@
-package com.example.chronocoursejc2.ui.theme
+package com.jccdkct.chronoregatecomite.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

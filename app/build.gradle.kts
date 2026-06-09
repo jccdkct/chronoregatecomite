@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.chronocoursejc2"
+    namespace = "com.jccdkct.chronoregatecomite"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.example.chronocoursejc2"
+        applicationId = "com.jccdkct.chronoregatecomite"
         minSdk = 24
         targetSdk = 37
         versionCode = 1

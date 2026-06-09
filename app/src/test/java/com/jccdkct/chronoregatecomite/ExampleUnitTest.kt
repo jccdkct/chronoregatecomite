@@ -1,4 +1,4 @@
-package com.example.chronocoursejc2
+package com.jccdkct.chronoregatecomite
 
 import org.junit.Test
 

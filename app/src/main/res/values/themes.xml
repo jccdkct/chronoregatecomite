@@ -1,4 +1,4 @@
 <resources>
 
-    <style name="Theme.Chronocoursejc2" parent="Theme.MaterialComponents.Light" />
+    <style name="Theme.ChronoRegateComite" parent="Theme.MaterialComponents.Light" />
 </resources>

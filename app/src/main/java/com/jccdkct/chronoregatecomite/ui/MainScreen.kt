@@ -1,4 +1,4 @@
-package com.example.chronocoursejc2.ui
+package com.jccdkct.chronoregatecomite.ui
 
 import android.app.Activity
 import android.content.Context
@@ -41,9 +41,9 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.chronocoursejc2.BuildConfig
-import com.example.chronocoursejc2.R
-import com.example.chronocoursejc2.ui.theme.Chronocoursejc2Theme
+import com.jccdkct.chronoregatecomite.BuildConfig
+import com.jccdkct.chronoregatecomite.R
+import com.jccdkct.chronoregatecomite.ui.theme.ChronoRegateComiteTheme
 import java.util.Locale
 
 @Composable
@@ -65,8 +65,6 @@ fun MainScreen(
     val selectedBeepTone by viewModel.selectedBeepTone.collectAsStateWithLifecycle()
     val soundLevel by viewModel.soundLevel.collectAsStateWithLifecycle()
     val brightnessLevel by viewModel.brightnessLevel.collectAsStateWithLifecycle()
-    val latestVersion by viewModel.latestVersion.collectAsStateWithLifecycle()
-    val isUpdateAvailable by viewModel.isUpdateAvailable.collectAsStateWithLifecycle()
 
     MainScreenContent(
         currentTime = currentTime,
@@ -84,8 +82,6 @@ fun MainScreen(
         selectedBeepTone = selectedBeepTone,
         soundLevel = soundLevel,
         brightnessLevel = brightnessLevel,
-        latestVersion = latestVersion,
-        isUpdateAvailable = isUpdateAvailable,
         onProcedureSelected = { viewModel.selectProcedure(it) },
         onStopAndSave = { viewModel.stopAndSave() },
         onResetRace = { viewModel.resetRace() },
@@ -119,8 +115,6 @@ fun MainScreenContent(
     selectedBeepTone: Int,
     soundLevel: Int,
     brightnessLevel: Int,
-    latestVersion: String,
-    isUpdateAvailable: Boolean,
     onProcedureSelected: (Procedure) -> Unit,
     onStopAndSave: () -> Unit,
     onResetRace: () -> Unit,
@@ -190,8 +184,6 @@ fun MainScreenContent(
 
     if (showProcedureDialog) {
         ProcedureSelectionDialog(
-            latestVersion = latestVersion,
-            isUpdateAvailable = isUpdateAvailable,
             onProcedureSelected = onProcedureSelected
         )
     }
@@ -506,8 +498,6 @@ fun MainScreenContent(
 
 @Composable
 fun ProcedureSelectionDialog(
-    latestVersion: String,
-    isUpdateAvailable: Boolean,
     onProcedureSelected: (Procedure) -> Unit
 ) {
     Dialog(
@@ -547,13 +537,13 @@ fun ProcedureSelectionDialog(
                                 text = "Chrono Régate Comité",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Black,
-                                color = MaterialTheme.colorScheme.primary
+                                color = Color.Black
                             )
                             Text(
                                 text = "Départs, arrivées et chronométrage de course",
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.secondary,
+                                color = Color.Black,
                                 textAlign = TextAlign.Center
                             )
                             Spacer(modifier = Modifier.height(16.dp))
@@ -565,6 +555,9 @@ fun ProcedureSelectionDialog(
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             
+                            val colorA = Color(0xFF6B5A67)
+                            val colorB = Color(0xFF4C6570)
+
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -574,13 +567,13 @@ fun ProcedureSelectionDialog(
                             ) {
                                 ProcedureButton(
                                     procedure = Procedure.PROC_10,
-                                    color = Color(0xFFFF5722),
+                                    color = colorA,
                                     onProcedureSelected = onProcedureSelected,
                                     modifier = Modifier.weight(1f)
                                 )
                                 ProcedureButton(
                                     procedure = Procedure.PROC_210,
-                                    color = Color(0xFF673AB7),
+                                    color = colorB,
                                     onProcedureSelected = onProcedureSelected,
                                     modifier = Modifier.weight(1f)
                                 )
@@ -597,13 +590,13 @@ fun ProcedureSelectionDialog(
                             ) {
                                 ProcedureButton(
                                     procedure = Procedure.PROC_3210,
-                                    color = Color(0xFF2196F3),
+                                    color = colorB,
                                     onProcedureSelected = onProcedureSelected,
                                     modifier = Modifier.weight(1f)
                                 )
                                 ProcedureButton(
                                     procedure = Procedure.PROC_5410,
-                                    color = Color(0xFF4CAF50),
+                                    color = colorA,
                                     onProcedureSelected = onProcedureSelected,
                                     modifier = Modifier.weight(1f)
                                 )
@@ -620,13 +613,13 @@ fun ProcedureSelectionDialog(
                             ) {
                                 ProcedureButton(
                                     procedure = Procedure.PROC_6410,
-                                    color = Color(0xFFFF9800),
+                                    color = colorA,
                                     onProcedureSelected = onProcedureSelected,
                                     modifier = Modifier.weight(1f)
                                 )
                                 ProcedureButton(
                                     procedure = Procedure.PROC_8410,
-                                    color = Color(0xFFE91E63),
+                                    color = colorB,
                                     onProcedureSelected = onProcedureSelected,
                                     modifier = Modifier.weight(1f)
                                 )
@@ -643,13 +636,13 @@ fun ProcedureSelectionDialog(
                             ) {
                                 ProcedureButton(
                                     procedure = Procedure.PROC_10410,
-                                    color = Color(0xFF00BCD4),
+                                    color = colorB,
                                     onProcedureSelected = onProcedureSelected,
                                     modifier = Modifier.weight(1f)
                                 )
                                 ProcedureButton(
                                     procedure = Procedure.NONE,
-                                    color = Color(0xFF9C27B0),
+                                    color = colorA,
                                     onProcedureSelected = onProcedureSelected,
                                     modifier = Modifier.weight(1f)
                                 )
@@ -678,79 +671,7 @@ fun ProcedureSelectionDialog(
                                     Text("Quitter", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall)
                                 }
                             }
-                            
-                            Spacer(modifier = Modifier.height(64.dp)) // Space for the banner (taller now)
                         }
-
-                    // Update & Share Banner - Full Width at the bottom
-                    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
-                    val context = LocalContext.current
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(64.dp)
-                            .align(Alignment.BottomCenter),
-                        color = Color.Black,
-                        contentColor = Color.White
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            // Line 1: Share Application
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f)
-                                    .clickable {
-                                        val shareText = "Site internet de l'app Chrono Régate Comité : https://github.com/jccdkct/Chronocoursejc2\nLien de téléchargement du dernier fichier d'installation APK de cette application : https://github.com/jccdkct/Chronocoursejc2/releases/latest/download/chronocoursejc2.apk"
-                                        val sendIntent: Intent = Intent().apply {
-                                            action = Intent.ACTION_SEND
-                                            putExtra(Intent.EXTRA_TEXT, shareText)
-                                            type = "text/plain"
-                                        }
-                                        val shareIntent = Intent.createChooser(sendIntent, null)
-                                        context.startActivity(shareIntent)
-                                    },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "Partager cette application",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White // Writing in white
-                                )
-                            }
-
-                            HorizontalDivider(color = Color.White.copy(alpha = 0.3f), thickness = 0.5.dp)
-
-                            // Line 2: Version & Update
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f)
-                                    .clickable(enabled = isUpdateAvailable) {
-                                        if (isUpdateAvailable) {
-                                            uriHandler.openUri("https://github.com/jccdkct/Chronocoursejc2/releases/latest/download/chronocoursejc2.apk")
-                                        }
-                                    },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = if (isUpdateAvailable) {
-                                        "Version ${BuildConfig.VERSION_NAME} - télécharger mise à jour $latestVersion"
-                                    } else {
-                                        "Version ${BuildConfig.VERSION_NAME} - Application à jour"
-                                    },
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    textAlign = TextAlign.Center,
-                                    fontSize = 10.sp
-                                )
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -1601,7 +1522,7 @@ fun KeypadButton(
 }
 @Composable
 fun MainScreenSmallPreview() {
-    Chronocoursejc2Theme {
+    ChronoRegateComiteTheme {
         MainScreenContent(
             currentTime = "10:30:00",
             batteryPercentage = 85,
@@ -1618,8 +1539,6 @@ fun MainScreenSmallPreview() {
             selectedBeepTone = android.media.ToneGenerator.TONE_CDMA_PIP,
             soundLevel = 3,
             brightnessLevel = 100,
-            latestVersion = "v009",
-            isUpdateAvailable = false,
             onProcedureSelected = {},
             onStopAndSave = {},
             onResetRace = {},
