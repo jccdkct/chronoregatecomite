@@ -63,6 +63,8 @@ fun MainScreen(
     val lastSavedFileContent by viewModel.lastSavedFileContent.collectAsStateWithLifecycle()
     val savedFilesCount by viewModel.savedFilesCount.collectAsStateWithLifecycle()
     val selectedBeepTone by viewModel.selectedBeepTone.collectAsStateWithLifecycle()
+    val soundLevel by viewModel.soundLevel.collectAsStateWithLifecycle()
+    val brightnessLevel by viewModel.brightnessLevel.collectAsStateWithLifecycle()
     val latestVersion by viewModel.latestVersion.collectAsStateWithLifecycle()
     val isUpdateAvailable by viewModel.isUpdateAvailable.collectAsStateWithLifecycle()
 
@@ -80,6 +82,8 @@ fun MainScreen(
         lastSavedFileContent = lastSavedFileContent,
         savedFilesCount = savedFilesCount,
         selectedBeepTone = selectedBeepTone,
+        soundLevel = soundLevel,
+        brightnessLevel = brightnessLevel,
         latestVersion = latestVersion,
         isUpdateAvailable = isUpdateAvailable,
         onProcedureSelected = { viewModel.selectProcedure(it) },
@@ -87,12 +91,14 @@ fun MainScreen(
         onResetRace = { viewModel.resetRace() },
         onArrivalClick = { viewModel.recordArrival() },
         onTriggerStartAction = { viewModel.triggerStartAction() },
-        onUpdateSail = { rank, sail -> viewModel.updateSailNumber(rank, sail) },
+        onUpdateSail = { rankOrId, sail, isClassified -> viewModel.updateSailNumber(rankOrId, sail, isClassified) },
         onToggleExclusion = { viewModel.toggleArrivalExclusion(it) },
         onrecordNonClassified = { code, sail -> viewModel.recordNonClassified(code, sail) },
         onUpdateNonClassifiedCode = { id, code -> viewModel.updateNonClassifiedCode(id, code) },
         onRefreshFiles = { viewModel.updateSavedFilesCount() },
-        onSetBeepTone = { viewModel.setBeepTone(it) }
+        onSetBeepTone = { viewModel.setBeepTone(it) },
+        onSetSoundLevel = { viewModel.setSoundLevel(it) },
+        onSetBrightnessLevel = { viewModel.setBrightnessLevel(it) }
     )
 }
 
@@ -111,6 +117,8 @@ fun MainScreenContent(
     lastSavedFileContent: String,
     savedFilesCount: Int,
     selectedBeepTone: Int,
+    soundLevel: Int,
+    brightnessLevel: Int,
     latestVersion: String,
     isUpdateAvailable: Boolean,
     onProcedureSelected: (Procedure) -> Unit,
@@ -118,12 +126,14 @@ fun MainScreenContent(
     onResetRace: () -> Unit,
     onArrivalClick: () -> Unit,
     onTriggerStartAction: () -> Unit,
-    onUpdateSail: (Int, String) -> Unit,
+    onUpdateSail: (Long, String, Boolean) -> Unit,
     onToggleExclusion: (Long) -> Unit,
     onrecordNonClassified: (String, String) -> Unit,
     onUpdateNonClassifiedCode: (Long, String) -> Unit,
     onRefreshFiles: () -> Unit,
-    onSetBeepTone: (Int) -> Unit
+    onSetBeepTone: (Int) -> Unit,
+    onSetSoundLevel: (Int) -> Unit,
+    onSetBrightnessLevel: (Int) -> Unit
 ) {
     val context = LocalContext.current
     var showStopDialog by remember { mutableStateOf(false) }
@@ -383,7 +393,9 @@ fun MainScreenContent(
             initialValue = editingSailForArrival?.sailNumber ?: "",
             rank = editingSailForArrival?.rank ?: 0,
             onConfirm = { rank, sail ->
-                onUpdateSail(rank, sail)
+                editingSailForArrival?.let {
+                    onUpdateSail(if (it.isClassified) rank.toLong() else it.id, sail, it.isClassified)
+                }
                 editingSailForArrival = null
             },
             onDismiss = { editingSailForArrival = null }
@@ -393,7 +405,16 @@ fun MainScreenContent(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            TopBar(currentTime, batteryPercentage, selectedBeepTone, onSetBeepTone)
+            TopBar(
+                currentTime, 
+                batteryPercentage, 
+                selectedBeepTone, 
+                soundLevel,
+                brightnessLevel,
+                onSetBeepTone,
+                onSetSoundLevel,
+                onSetBrightnessLevel
+            )
         },
         bottomBar = {
             Column(modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars)) {
@@ -749,19 +770,24 @@ fun TopBar(
     currentTime: String, 
     batteryPercentage: Int, 
     selectedBeepTone: Int,
-    onSetBeepTone: (Int) -> Unit
+    initialSoundLevel: Int,
+    initialBrightnessLevel: Int,
+    onSetBeepTone: (Int) -> Unit,
+    onSetSoundLevel: (Int) -> Unit,
+    onSetBrightnessLevel: (Int) -> Unit
 ) {
     val context = LocalContext.current
     val audioManager = remember { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
     
-    var brightnessLevel by remember { mutableIntStateOf(100) }
-    var soundLevel by remember { mutableIntStateOf(3) }
+    var brightnessLevel by remember { mutableIntStateOf(initialBrightnessLevel) }
+    var soundLevel by remember { mutableIntStateOf(initialSoundLevel) }
 
     fun setBrightness(level: Int) {
         val activity = context as? Activity ?: return
         val layoutParams: WindowManager.LayoutParams = activity.window.attributes
         layoutParams.screenBrightness = level / 100f
         activity.window.attributes = layoutParams
+        onSetBrightnessLevel(level)
     }
 
     fun setSound(level: Int) {
@@ -773,6 +799,7 @@ fun TopBar(
             else -> maxVol
         }
         audioManager.setStreamVolume(AudioManager.STREAM_NOTIFICATION, vol, 0)
+        onSetSoundLevel(level)
     }
 
     // Apply max levels on launch
@@ -1575,6 +1602,8 @@ fun MainScreenSmallPreview() {
             lastSavedFileContent = "Application Chronocoursejc2\n...",
             savedFilesCount = 5,
             selectedBeepTone = android.media.ToneGenerator.TONE_CDMA_PIP,
+            soundLevel = 3,
+            brightnessLevel = 100,
             latestVersion = "v009",
             isUpdateAvailable = false,
             onProcedureSelected = {},
@@ -1582,12 +1611,14 @@ fun MainScreenSmallPreview() {
             onResetRace = {},
             onArrivalClick = {},
             onTriggerStartAction = {},
-            onUpdateSail = { _, _ -> },
+            onUpdateSail = { _, _, _ -> },
             onToggleExclusion = {},
             onrecordNonClassified = { _, _ -> },
             onUpdateNonClassifiedCode = { _, _ -> },
             onRefreshFiles = {},
-            onSetBeepTone = {}
+            onSetBeepTone = {},
+            onSetSoundLevel = {},
+            onSetBrightnessLevel = {}
         )
     }
 }

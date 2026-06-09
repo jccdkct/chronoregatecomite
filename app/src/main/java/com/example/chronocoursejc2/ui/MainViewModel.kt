@@ -6,6 +6,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.SharedPreferences
 import android.media.AudioManager
 import android.media.ToneGenerator
 import android.net.Uri
@@ -86,8 +87,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _savedFilesCount = MutableStateFlow(0)
     val savedFilesCount: StateFlow<Int> = _savedFilesCount.asStateFlow()
 
-    private val _selectedBeepTone = MutableStateFlow(ToneGenerator.TONE_CDMA_PIP)
+    private val prefs: SharedPreferences = application.getSharedPreferences("ChronoPrefs", Context.MODE_PRIVATE)
+
+    private val _selectedBeepTone = MutableStateFlow(prefs.getInt("beepTone", ToneGenerator.TONE_CDMA_PIP))
     val selectedBeepTone: StateFlow<Int> = _selectedBeepTone.asStateFlow()
+
+    private val _soundLevel = MutableStateFlow(prefs.getInt("soundLevel", 3))
+    val soundLevel: StateFlow<Int> = _soundLevel.asStateFlow()
+
+    private val _brightnessLevel = MutableStateFlow(prefs.getInt("brightnessLevel", 100))
+    val brightnessLevel: StateFlow<Int> = _brightnessLevel.asStateFlow()
 
     private val _latestVersion = MutableStateFlow(BuildConfig.VERSION_NAME)
     val latestVersion: StateFlow<String> = _latestVersion.asStateFlow()
@@ -284,9 +293,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         refreshRanks()
     }
 
-    fun updateSailNumber(rank: Int, sailNumber: String) {
+    fun updateSailNumber(rankOrId: Long, sailNumber: String, isClassified: Boolean) {
         _arrivals.value = _arrivals.value.map {
-            if (it.rank == rank && it.isClassified) it.copy(sailNumber = sailNumber) else it
+            if (isClassified) {
+                if (it.rank == rankOrId.toInt() && it.isClassified) it.copy(sailNumber = sailNumber) else it
+            } else {
+                if (it.id == rankOrId && !it.isClassified) it.copy(sailNumber = sailNumber) else it
+            }
         }
     }
 
@@ -322,7 +335,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setBeepTone(tone: Int) {
         _selectedBeepTone.value = tone
+        prefs.edit().putInt("beepTone", tone).apply()
         playBeep()
+    }
+
+    fun setSoundLevel(level: Int) {
+        _soundLevel.value = level
+        prefs.edit().putInt("soundLevel", level).apply()
+    }
+
+    fun setBrightnessLevel(level: Int) {
+        _brightnessLevel.value = level
+        prefs.edit().putInt("brightnessLevel", level).apply()
     }
 
     fun stopAndSave() {
