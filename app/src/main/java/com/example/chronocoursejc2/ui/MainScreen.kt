@@ -544,6 +544,20 @@ fun ProcedureSelectionDialog(
                             verticalArrangement = Arrangement.Top // Start from top for better small screen fit
                         ) {
                             Text(
+                                text = "Chrono Régate Comité",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Black,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = "Départs, arrivées et chronométrage de course",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.secondary,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
                                 text = "Choix du compte à rebours (minutes)",
                                 style = MaterialTheme.typography.titleMedium, // Smaller title
                                 fontWeight = FontWeight.Bold,
@@ -690,7 +704,7 @@ fun ProcedureSelectionDialog(
                                     .fillMaxWidth()
                                     .weight(1f)
                                     .clickable {
-                                        val shareText = "Site internet de l'app ChronoCourseJC2 : https://github.com/jccdkct/Chronocoursejc2\nLien de téléchargement du dernier fichier d'installation APK de cette application : https://github.com/jccdkct/Chronocoursejc2/releases/latest/download/chronocoursejc2.apk"
+                                        val shareText = "Site internet de l'app Chrono Régate Comité : https://github.com/jccdkct/Chronocoursejc2\nLien de téléchargement du dernier fichier d'installation APK de cette application : https://github.com/jccdkct/Chronocoursejc2/releases/latest/download/chronocoursejc2.apk"
                                         val sendIntent: Intent = Intent().apply {
                                             action = Intent.ACTION_SEND
                                             putExtra(Intent.EXTRA_TEXT, shareText)

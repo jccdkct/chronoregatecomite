@@ -1,6 +1,6 @@
-# Chronocoursejc2 - Chronométrage de Régates Nautiques
+# Chrono Régate Comité - Départs, arrivées et chronométrage de course
 
-Chronocoursejc2 est une application de chronométrage de haute précision spécialement conçue pour les **régates nautiques** (voiliers, dériveur, planche à voile, etc.). Elle permet aux officiels de course de gérer les procédures de départ normalisées, de suivre les arrivées en temps réel et d'exporter les résultats officiels.
+Chrono Régate Comité (ex-Chronocoursejc2) est une application de chronométrage de haute précision spécialement conçue pour les **régates nautiques** (voiliers, dériveur, planche à voile, etc.). Elle permet aux officiels de course de gérer les procédures de départ normalisées, de suivre les arrivées en temps réel et d'exporter les résultats officiels.
 
 **Prérequis :** Compatible avec tous les appareils sous **Android 7.0 (Nougat) ou supérieur** (SDK 24+).
 
@@ -9,10 +9,10 @@ Chronocoursejc2 est une application de chronométrage de haute précision spéci
 *   **Procédures de Départ Normalisées :** Supporte les séquences de compte à rebours "3 2 1 0", "5 4 1 0", "6 4 1 0", "8 4 1 0" et "10 4 1 0" avec bips sonores synchronisés pour signaler les étapes clés du départ.
 *   **Enregistrement des Arrivées :** Capture instantanée de l'heure d'arrivée (au dixième de seconde) via le bouton à l'écran ou la touche physique **Volume Bas**, idéale pour garder les yeux sur la ligne d'arrivée.
 *   **Tableau de Bord en Temps Réel :** Affichage persistant de l'heure actuelle, du pourcentage de batterie et du statut de la course (compte à rebours ou chrono depuis le départ).
-*   **Exportation des Résultats :** Génération automatique d'un fichier texte formaté dans le dossier `Téléchargements` pour une transmission rapide des résultats.
-*   **Optimisation pour le Terrain :** Luminosité forcée à 100% et écran toujours allumé pour une lisibilité maximale en extérieur, même sous plein soleil.
+*   **Exportation des Résultats :** Génération automatique d'un fichier texte formaté dans le dossier `Documents/Chronocourse` pour une transmission rapide des résultats.
+*   **Optimisation pour le Terrain :** Luminosité et volume sonores ajustables, écran toujours allumé pour une lisibilité maximale.
 
-## Dernières Améliorations (Version v013)
+## Dernières Améliorations (Version 1.0)
 
 *   **Gestion des Non-Classés :** Ajout d'un système complet pour gérer les concurrents n'ayant pas franchi la ligne normalement.
     *   **Codes officiels :** Support des codes DNC, DNS, OCS, BFD, UFD, DNF, NSC, RET, DSQ avec descriptions détaillées.
@@ -24,7 +24,7 @@ Chronocoursejc2 est une application de chronométrage de haute précision spéci
 
 ## Installation & Utilisation
 
-1.  **Téléchargement :** Clonez ce dépôt ou téléchargez l'APK depuis la section [Releases](https://github.com/jccdkct/Chronocoursejc2/releases) (si disponible).
+1.  **Téléchargement :** Clonez ce dépôt ou téléchargez l'APK depuis la section [Releases](https://github.com/jccdkct/Chronocoursejc2/releases).
 2.  **Compilation :** Ouvrez le projet dans Android Studio (Arctic Fox ou plus récent).
 3.  **Lancement :** Connectez votre smartphone Android et cliquez sur **Run**.
 

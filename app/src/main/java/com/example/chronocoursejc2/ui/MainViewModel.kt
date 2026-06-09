@@ -361,7 +361,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val fileName = "ccjc2_$fileDateStr.txt"
             val content = buildString {
                 append("\uFEFF") // UTF-8 BOM for Windows encoding compatibility
-                append("Application Chronocoursejc2\n")
+                append("Application Chrono Régate Comité\n")
                 val startDateStr = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date(startTime))
                 append("Arrivees de la course dont le depart a eu lieu\n")
                 append("le $startDateStr à $startFormattedTime\n")
