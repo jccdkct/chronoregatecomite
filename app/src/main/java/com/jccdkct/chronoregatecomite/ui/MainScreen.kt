@@ -197,7 +197,7 @@ fun MainScreenContent(
                 Button(
                     onClick = {
                         val documentsDir = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOCUMENTS)
-                        val folder = java.io.File(documentsDir, "Chronocourse")
+                        val folder = java.io.File(documentsDir, "ChronoRegateComite")
                         if (folder.exists() && folder.isDirectory) {
                             val oneMonthAgo = System.currentTimeMillis() - (30L * 24 * 60 * 60 * 1000)
                             folder.listFiles()?.forEach { file ->
@@ -258,7 +258,7 @@ fun MainScreenContent(
             title = { Text("Course terminée") },
             text = {
                 Column {
-                    Text("Listing sauvegardé dans Documents/Chronocourse.")
+                    Text("Listing sauvegardé dans Documents/ChronoRegateComite.")
                     Spacer(modifier = Modifier.height(12.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(

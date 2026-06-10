@@ -124,7 +124,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun updateSavedFilesCount() {
         viewModelScope.launch {
             val documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
-            val folder = File(documentsDir, "Chronocourse")
+            val folder = File(documentsDir, "ChronoRegateComite")
             if (folder.exists() && folder.isDirectory) {
                 val count = folder.listFiles { file -> file.isFile && file.name.endsWith(".txt") }?.size ?: 0
                 _savedFilesCount.value = count
@@ -340,7 +340,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
             _lastSavedFileContent.value = content
 
-            val relativePath = "${Environment.DIRECTORY_DOCUMENTS}/Chronocourse"
+            val relativePath = "${Environment.DIRECTORY_DOCUMENTS}/ChronoRegateComite"
             
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 val resolver = getApplication<Application>().contentResolver
@@ -355,8 +355,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     resolver.openOutputStream(it)?.use { it.write(content.toByteArray()) }
                 }
             } else {
-                val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
-                val folder = File(downloadsDir, "Chronocourse")
+                val documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+                val folder = File(documentsDir, "ChronoRegateComite")
                 if (!folder.exists()) folder.mkdirs()
                 val file = File(folder, fileName)
                 FileOutputStream(file).use { it.write(content.toByteArray()) }
