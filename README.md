@@ -42,6 +42,6 @@ Il est proposé dans le Google Play Store.
 
 <p align="center">
   <a href="https://youtu.be/3mytdD7HXxo">
-    <img src="screenshots/demo2.jpg" width="400" alt="Cliquer pour voir la vidéo de démonstration" />
+    <img src="screenshots/demo2.jpg" width="372" alt="Cliquer pour voir la vidéo de démonstration" />
   </a>
 </p>

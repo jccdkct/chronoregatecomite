@@ -830,9 +830,9 @@ fun TopBar(
                 IconButton(
                     onClick = {
                         val nextTone = when(selectedBeepTone) {
-                            android.media.ToneGenerator.TONE_CDMA_PIP -> android.media.ToneGenerator.TONE_PROP_BEEP2
-                            android.media.ToneGenerator.TONE_PROP_BEEP2 -> android.media.ToneGenerator.TONE_CDMA_HIGH_L
-                            else -> android.media.ToneGenerator.TONE_CDMA_PIP
+                            ToneGenerator.TONE_CDMA_PIP -> ToneGenerator.TONE_PROP_BEEP2
+                            ToneGenerator.TONE_PROP_BEEP2 -> ToneGenerator.TONE_CDMA_HIGH_L
+                            else -> ToneGenerator.TONE_CDMA_PIP
                         }
                         onSetBeepTone(nextTone)
                     },
@@ -846,8 +846,8 @@ fun TopBar(
                             tint = MaterialTheme.colorScheme.primary
                         )
                         val badgeText = when(selectedBeepTone) {
-                            android.media.ToneGenerator.TONE_CDMA_PIP -> "1"
-                            android.media.ToneGenerator.TONE_PROP_BEEP2 -> "2"
+                            ToneGenerator.TONE_CDMA_PIP -> "1"
+                            ToneGenerator.TONE_PROP_BEEP2 -> "2"
                             else -> "3"
                         }
                         Text(
@@ -858,15 +858,6 @@ fun TopBar(
                         )
                     }
                 }
-
-                Spacer(modifier = Modifier.width(4.dp))
-                Image(
-                    painter = painterResource(id = R.drawable.fondcomite),
-                    contentDescription = "App Icon",
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clip(MaterialTheme.shapes.small)
-                )
             }
         }
     }
@@ -1298,8 +1289,24 @@ fun SailNumberEntryDialog(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     if (isNumeric) {
+                        // Country shortcuts in smaller layout
+                        val countries = listOf("AUS", "AUT", "BEL", "CZE", "DEN", "ESP", "FIN", "FRA", "GBR", "GER", "ITA", "NED", "POL", "SUI", "SWE", "USA")
+                        countries.chunked(4).forEach { row ->
+                            Row(
+                                modifier = Modifier.weight(0.6f).fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                row.forEach { country ->
+                                    KeypadButton(country, modifier = Modifier.weight(1f), isSmall = true) {
+                                        if (currentValue.length < 12) currentValue += country
+                                    }
+                                }
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.height(4.dp))
+
                         val keys = listOf(
-                            listOf("FRA", "GBR", "BEL", "NED"),
                             listOf("1", "2", "3"),
                             listOf("4", "5", "6"),
                             listOf("7", "8", "9"),
@@ -1315,7 +1322,6 @@ fun SailNumberEntryDialog(
                                         when (key) {
                                             "EFF" -> currentValue = ""
                                             "⌫" -> if (currentValue.isNotEmpty()) currentValue = currentValue.dropLast(1)
-                                            "FRA", "GBR", "BEL", "NED" -> if (currentValue.length < 12) currentValue += key
                                             else -> if (currentValue.length < 12) currentValue += key
                                         }
                                     }

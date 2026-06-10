@@ -259,12 +259,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun updateNonClassifiedSail(id: Long, sailNumber: String) {
-        _arrivals.value = _arrivals.value.map {
-            if (it.id == id) it.copy(sailNumber = sailNumber) else it
-        }
-    }
-
     fun updateNonClassifiedCode(id: Long, code: String) {
         _arrivals.value = _arrivals.value.map {
             if (it.id == id) it.copy(duration = code, arrivalTime = code) else it
@@ -400,7 +394,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     override fun onCleared() {
-        super.onCleared()
         getApplication<Application>().unregisterReceiver(batteryReceiver)
     }
 }
