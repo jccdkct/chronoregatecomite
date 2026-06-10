@@ -41,7 +41,7 @@ android {
 androidComponents {
     onVariants { variant ->
         variant.outputs.forEach { output ->
-            output.outputFileName.set("chronocoursejc2.apk")
+            output.outputFileName.set("chronoregatecomite.apk")
         }
     }
 }

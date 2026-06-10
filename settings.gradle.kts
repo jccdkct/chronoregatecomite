@@ -22,6 +22,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Chronocoursejc2"
+rootProject.name = "ChronoRegateComite"
 include(":app")
  

@@ -253,13 +253,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         refreshRanks()
     }
 
-    fun updateSailNumber(rankOrId: Long, sailNumber: String, isClassified: Boolean) {
+    fun updateSailNumber(id: Long, sailNumber: String) {
         _arrivals.value = _arrivals.value.map {
-            if (isClassified) {
-                if (it.rank == rankOrId.toInt() && it.isClassified) it.copy(sailNumber = sailNumber) else it
-            } else {
-                if (it.id == rankOrId && !it.isClassified) it.copy(sailNumber = sailNumber) else it
-            }
+            if (it.id == id) it.copy(sailNumber = sailNumber) else it
         }
     }
 

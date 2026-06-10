@@ -87,7 +87,7 @@ fun MainScreen(
         onResetRace = { viewModel.resetRace() },
         onArrivalClick = { viewModel.recordArrival() },
         onTriggerStartAction = { viewModel.triggerStartAction() },
-        onUpdateSail = { rankOrId, sail, isClassified -> viewModel.updateSailNumber(rankOrId, sail, isClassified) },
+        onUpdateSail = { id, sail -> viewModel.updateSailNumber(id, sail) },
         onToggleExclusion = { viewModel.toggleArrivalExclusion(it) },
         onrecordNonClassified = { code, sail -> viewModel.recordNonClassified(code, sail) },
         onUpdateNonClassifiedCode = { id, code -> viewModel.updateNonClassifiedCode(id, code) },
@@ -120,7 +120,7 @@ fun MainScreenContent(
     onResetRace: () -> Unit,
     onArrivalClick: () -> Unit,
     onTriggerStartAction: () -> Unit,
-    onUpdateSail: (Long, String, Boolean) -> Unit,
+    onUpdateSail: (Long, String) -> Unit,
     onToggleExclusion: (Long) -> Unit,
     onrecordNonClassified: (String, String) -> Unit,
     onUpdateNonClassifiedCode: (Long, String) -> Unit,
@@ -384,9 +384,9 @@ fun MainScreenContent(
         SailNumberEntryDialog(
             initialValue = editingSailForArrival?.sailNumber ?: "",
             rank = editingSailForArrival?.rank ?: 0,
-            onConfirm = { rank, sail ->
+            onConfirm = { _, sail ->
                 editingSailForArrival?.let {
-                    onUpdateSail(if (it.isClassified) rank.toLong() else it.id, sail, it.isClassified)
+                    onUpdateSail(it.id, sail)
                 }
                 editingSailForArrival = null
             },
@@ -861,7 +861,7 @@ fun TopBar(
 
                 Spacer(modifier = Modifier.width(4.dp))
                 Image(
-                    painter = painterResource(id = R.mipmap.ic_launcher_custom),
+                    painter = painterResource(id = R.drawable.fondcomite),
                     contentDescription = "App Icon",
                     modifier = Modifier
                         .size(28.dp)
@@ -1534,7 +1534,7 @@ fun MainScreenSmallPreview() {
             showPostRaceDialog = false,
             selectedProcedure = Procedure.PROC_6410,
             plannedDepartureTimeLabel = "10:30:00",
-            lastSavedFileContent = "Application Chronocoursejc2\n...",
+            lastSavedFileContent = "Application Chrono Régate Comité\n...",
             savedFilesCount = 5,
             selectedBeepTone = android.media.ToneGenerator.TONE_CDMA_PIP,
             soundLevel = 3,
@@ -1544,7 +1544,7 @@ fun MainScreenSmallPreview() {
             onResetRace = {},
             onArrivalClick = {},
             onTriggerStartAction = {},
-            onUpdateSail = { _, _, _ -> },
+            onUpdateSail = { _, _ -> },
             onToggleExclusion = {},
             onrecordNonClassified = { _, _ -> },
             onUpdateNonClassifiedCode = { _, _ -> },

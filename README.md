@@ -30,6 +30,7 @@ Chrono Régate Comité est une application de chronométrage de haute précision
 
 ## Contribution
 
+Première version par Jean-Charles C. 
 Les contributions sont les bienvenues ! N'hésitez pas à ouvrir une *Issue* pour signaler un bug ou proposer une amélioration, ou à soumettre une *Pull Request*.
 
 ## Licence
