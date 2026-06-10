@@ -13,3 +13,8 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Ignore heavy binaries
+/app/release/*.apk
+/app/release/*.aab
+/app/release/baselineProfiles/
