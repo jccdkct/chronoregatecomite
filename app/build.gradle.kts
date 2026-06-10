@@ -46,6 +46,11 @@ androidComponents {
     }
 }
 
+// Global name for archives (including bundles)
+base {
+    archivesName.set("chronoregatecomite")
+}
+
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.accompanist.permissions)
