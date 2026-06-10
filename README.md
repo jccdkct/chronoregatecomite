@@ -1,6 +1,6 @@
 # Chrono Régate Comité - Départs, arrivées et chronométrage de course
 
-Chrono Régate Comité est une application de chronométrage de haute précision spécialement conçue pour les **régates nautiques** (voiliers, dériveur, planche à voile, etc.). Elle permet aux officiels de course de gérer les procédures de départ normalisées, de suivre les arrivées en temps réel et d'exporter les résultats officiels.
+Chrono Régate Comité est une application de chronométrage spécialement conçue pour les **régates nautiques** (voiliers, dériveur, planche à voile, etc.). Elle permet aux officiels de course de gérer les procédures de départ normalisées, de suivre les arrivées en temps réel et d'exporter les résultats officiels.
 
 **Prérequis :** Compatible avec tous les appareils sous **Android 7.0 (Nougat) ou supérieur** (SDK 24+).
 
@@ -24,10 +24,12 @@ Chrono Régate Comité est une application de chronométrage de haute précision
 
 ## Installation & Utilisation
 
-1.  **Téléchargement :** Clonez ce dépôt ou téléchargez l'APK depuis la section [Releases](https://github.com/jccdkct/chronoregatecomite/releases).
+1.  **Téléchargement :** Clonez ce dépôt.
 2.  **Compilation :** Ouvrez le projet dans Android Studio (Arctic Fox ou plus récent).
 3.  **Lancement :** Connectez votre smartphone Android et cliquez sur **Run**.
  
+Ou bien utilisez la version disponible sur Google Play Store.
+
 ## Contribution
 
 Première version par Jean-Charles C. 
