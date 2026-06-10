@@ -36,6 +36,7 @@ Les contributions sont les bienvenues ! N'hésitez pas à ouvrir une *Issue* pou
 ## Licence
 
 Ce projet est sous licence **MIT**. Voir le fichier [LICENSE](LICENSE) pour plus de détails.
+Il est proposé dans le Google Play Store.
 
 ## Démo Vidéo
 
