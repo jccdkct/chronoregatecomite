@@ -703,52 +703,30 @@ fun ProcedureSelectionDialog(
                                 )
                             }
 
-                            // Bandeau 2: Télécharger
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/jccdkct/chronoregatecomite/releases/download/latest/chronoregatecomite.apkhttps://github.com/jccdkct/chronoregatecomite/releases/latest/download/chronoregatecomite.apk"))
-                                        context.startActivity(intent)
-                                    }
-                                    .padding(vertical = 4.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "Télécharger dernière version",
-                                    color = Color.DarkGray,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    textAlign = TextAlign.Center,
-                                    textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
-                                )
-                            }
-
-                            // Bandeau 3: Status
+                            // Bandeau 2: Status & Télécharger
                             val currentVersion = BuildConfig.VERSION_NAME
                             val isUpToDate = latestVersion == null || latestVersion == currentVersion
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable {
-                                        if (!isUpToDate) {
-                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/jccdkct/chronoregatecomite/releases/latest/download/chronoregatecomite.apk"))
-                                            context.startActivity(intent)
-                                        }
+                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/jccdkct/chronoregatecomite/releases/latest/download/chronoregatecomite.apk"))
+                                        context.startActivity(intent)
                                     }
                                     .padding(vertical = 4.dp),
                                 contentAlignment = Alignment.Center
                             ) {
                                 val statusText = if (isUpToDate) {
-                                    "version installée $currentVersion, Appli à jour"
+                                    "version $currentVersion installée - Appli à jour"
                                 } else {
-                                    "version installée $currentVersion / Version à télécharger : $latestVersion"
+                                    "version $currentVersion installée - Télécharger $latestVersion"
                                 }
                                 Text(
                                     text = statusText,
                                     color = Color.DarkGray,
                                     style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
                                 )
                             }
                         }
