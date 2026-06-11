@@ -708,7 +708,7 @@ fun ProcedureSelectionDialog(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable {
-                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/jccdkct/chronoregatecomite/releases/latest"))
+                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/jccdkct/chronoregatecomite/releases/download/latest/chronoregatecomite.apkhttps://github.com/jccdkct/chronoregatecomite/releases/latest/download/chronoregatecomite.apk"))
                                         context.startActivity(intent)
                                     }
                                     .padding(vertical = 4.dp),
@@ -732,7 +732,7 @@ fun ProcedureSelectionDialog(
                                     .fillMaxWidth()
                                     .clickable {
                                         if (!isUpToDate) {
-                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/jccdkct/chronoregatecomite/releases/latest"))
+                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/jccdkct/chronoregatecomite/releases/latest/download/chronoregatecomite.apk"))
                                             context.startActivity(intent)
                                         }
                                     }
