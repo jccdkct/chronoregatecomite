@@ -28,12 +28,11 @@ Chrono Régate Comité est une application de chronométrage spécialement conç
 2.  **Compilation :** Ouvrez le projet dans Android Studio (Arctic Fox ou plus récent).
 3.  **Lancement :** Connectez votre smartphone Android et cliquez sur **Run**.
  
-Ou bien utilisez la version disponible sur Google Play Store.
 
 ## Contribution
 
 Première version par Jean-Charles C. 
-Les contributions sont les bienvenues ! N'hésitez pas à ouvrir une *Issue* pour signaler un bug ou proposer une amélioration, ou à soumettre une *Pull Request*.
+Les contributions sont les bienvenues ! N'hésitez pas à signaler un bug ou proposer une amélioration.
 
 ## Licence
 
@@ -42,8 +41,8 @@ Il est proposé dans le Google Play Store.
 
 ## Démo Vidéo
 
-<p align="center">
-  <a href="https://youtu.be/3mytdD7HXxo">
+<p style="texte-align:center">
+  <a href="https://www.youtube.com/shorts/z5VRnEkmTFQ">
     <img src="screenshots/demo2.jpg" width="372" alt="Cliquer pour voir la vidéo de démonstration" />
   </a>
 </p>

@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.media.AudioManager
 import android.media.ToneGenerator
+import android.net.Uri
 import android.view.WindowManager
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -65,6 +66,7 @@ fun MainScreen(
     val selectedBeepTone by viewModel.selectedBeepTone.collectAsStateWithLifecycle()
     val soundLevel by viewModel.soundLevel.collectAsStateWithLifecycle()
     val brightnessLevel by viewModel.brightnessLevel.collectAsStateWithLifecycle()
+    val latestVersion by viewModel.latestVersion.collectAsStateWithLifecycle()
 
     MainScreenContent(
         currentTime = currentTime,
@@ -82,6 +84,7 @@ fun MainScreen(
         selectedBeepTone = selectedBeepTone,
         soundLevel = soundLevel,
         brightnessLevel = brightnessLevel,
+        latestVersion = latestVersion,
         onProcedureSelected = { viewModel.selectProcedure(it) },
         onStopAndSave = { viewModel.stopAndSave() },
         onResetRace = { viewModel.resetRace() },
@@ -115,6 +118,7 @@ fun MainScreenContent(
     selectedBeepTone: Int,
     soundLevel: Int,
     brightnessLevel: Int,
+    latestVersion: String?,
     onProcedureSelected: (Procedure) -> Unit,
     onStopAndSave: () -> Unit,
     onResetRace: () -> Unit,
@@ -184,6 +188,7 @@ fun MainScreenContent(
 
     if (showProcedureDialog) {
         ProcedureSelectionDialog(
+            latestVersion = latestVersion,
             onProcedureSelected = onProcedureSelected
         )
     }
@@ -264,7 +269,7 @@ fun MainScreenContent(
                         Button(
                             onClick = {
                                 val intent = Intent(Intent.ACTION_VIEW)
-                                intent.setDataAndType(android.net.Uri.parse("content://com.android.externalstorage.documents/root/primary"), "vnd.android.document/root")
+                                intent.setDataAndType(Uri.parse("content://com.android.externalstorage.documents/root/primary"), "vnd.android.document/root")
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                 try {
                                     context.startActivity(intent)
@@ -498,6 +503,7 @@ fun MainScreenContent(
 
 @Composable
 fun ProcedureSelectionDialog(
+    latestVersion: String?,
     onProcedureSelected: (Procedure) -> Unit
 ) {
     Dialog(
@@ -671,6 +677,80 @@ fun ProcedureSelectionDialog(
                                     Text("Quitter", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall)
                                 }
                             }
+
+                            Spacer(modifier = Modifier.height(24.dp))
+
+                            // Bandeau 1: Partager
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        val sendIntent = Intent().apply {
+                                            action = Intent.ACTION_SEND
+                                            putExtra(Intent.EXTRA_TEXT, "Chrono Régate Comité - L'app de chronométrage nautique : https://github.com/jccdkct/chronoregatecomite/releases/latest")
+                                            type = "text/plain"
+                                        }
+                                        context.startActivity(Intent.createChooser(sendIntent, null))
+                                    }
+                                    .padding(vertical = 4.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "Partager l'application",
+                                    color = Color.DarkGray,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+
+                            // Bandeau 2: Télécharger
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/jccdkct/chronoregatecomite/releases/latest"))
+                                        context.startActivity(intent)
+                                    }
+                                    .padding(vertical = 4.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "Télécharger dernière version",
+                                    color = Color.DarkGray,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center,
+                                    textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
+                                )
+                            }
+
+                            // Bandeau 3: Status
+                            val currentVersion = BuildConfig.VERSION_NAME
+                            val isUpToDate = latestVersion == null || latestVersion == currentVersion
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        if (!isUpToDate) {
+                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/jccdkct/chronoregatecomite/releases/latest"))
+                                            context.startActivity(intent)
+                                        }
+                                    }
+                                    .padding(vertical = 4.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                val statusText = if (isUpToDate) {
+                                    "version installée $currentVersion, Appli à jour"
+                                } else {
+                                    "version installée $currentVersion / Version à télécharger : $latestVersion"
+                                }
+                                Text(
+                                    text = statusText,
+                                    color = Color.DarkGray,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                 }
             }
@@ -735,6 +815,11 @@ fun TopBar(
         }
         audioManager.setStreamVolume(AudioManager.STREAM_NOTIFICATION, vol, 0)
         onSetSoundLevel(level)
+        
+        // Play beep at new intensity
+        ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100).apply {
+            startTone(selectedBeepTone, 150)
+        }
     }
 
     // Apply max levels on launch
@@ -1431,7 +1516,7 @@ fun NonClassifiedCodeDialog(
 
                 Column(
                     modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     // Predefined Codes with Descriptions
                     codes.chunked(3).forEach { row ->
@@ -1439,19 +1524,19 @@ fun NonClassifiedCodeDialog(
                             row.forEach { (code, desc) ->
                                 Button(
                                     onClick = { currentValue = code },
-                                    modifier = Modifier.weight(1f).height(74.dp),
+                                    modifier = Modifier.weight(1f).height(62.dp),
                                     shape = MaterialTheme.shapes.medium,
                                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF505050)),
-                                    contentPadding = PaddingValues(2.dp)
+                                    contentPadding = PaddingValues(1.dp)
                                 ) {
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                         Text(code, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
                                         Text(
                                             text = desc, 
                                             style = MaterialTheme.typography.labelSmall, 
-                                            fontSize = 11.sp, 
+                                            fontSize = 10.sp, 
                                             textAlign = TextAlign.Center, 
-                                            lineHeight = 12.sp,
+                                            lineHeight = 11.sp,
                                             maxLines = 2
                                         )
                                     }
@@ -1460,9 +1545,9 @@ fun NonClassifiedCodeDialog(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
                     HorizontalDivider(thickness = 1.dp, color = Color.Gray.copy(alpha = 0.5f))
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
                     // Alphabet Keypad
                     val alphabet = ('A'..'Z').map { it.toString() } + listOf(" ", "EFF", "⌫")
@@ -1471,13 +1556,13 @@ fun NonClassifiedCodeDialog(
                             row.forEach { key ->
                                 KeypadButton(
                                     text = key, 
-                                    modifier = Modifier.weight(1f).height(45.dp),
+                                    modifier = Modifier.weight(1f).height(40.dp),
                                     isSmall = true
                                 ) {
                                     when (key) {
                                         "EFF" -> currentValue = ""
                                         "⌫" -> if (currentValue.isNotEmpty()) currentValue = currentValue.dropLast(1)
-                                        else -> if (currentValue.length < 8) currentValue += key
+                                        else -> if (currentValue.length < 10) currentValue += key
                                     }
                                 }
                             }
@@ -1486,7 +1571,7 @@ fun NonClassifiedCodeDialog(
                                 repeat(6 - row.size) { Spacer(modifier = Modifier.weight(1f)) }
                             }
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(2.dp))
                     }
                 }
 
@@ -1545,6 +1630,7 @@ fun MainScreenSmallPreview() {
             selectedBeepTone = android.media.ToneGenerator.TONE_CDMA_PIP,
             soundLevel = 3,
             brightnessLevel = 100,
+            latestVersion = "1.1",
             onProcedureSelected = {},
             onStopAndSave = {},
             onResetRace = {},

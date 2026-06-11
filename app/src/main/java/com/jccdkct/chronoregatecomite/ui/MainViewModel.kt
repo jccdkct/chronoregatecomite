@@ -16,6 +16,7 @@ import android.os.Environment
 import android.provider.MediaStore
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +25,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
+import java.net.HttpURLConnection
+import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -83,6 +86,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _savedFilesCount = MutableStateFlow(0)
     val savedFilesCount: StateFlow<Int> = _savedFilesCount.asStateFlow()
 
+    private val _latestVersion = MutableStateFlow<String?>(null)
+    val latestVersion: StateFlow<String?> = _latestVersion.asStateFlow()
+
     private val _selectedBeepTone = MutableStateFlow(prefs.getInt("beepTone", ToneGenerator.TONE_CDMA_PIP))
     val selectedBeepTone: StateFlow<Int> = _selectedBeepTone.asStateFlow()
 
@@ -119,6 +125,26 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
         application.registerReceiver(batteryReceiver, filter)
         updateSavedFilesCount()
+        checkUpdate()
+    }
+
+    fun checkUpdate() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val url = URL("https://api.github.com/repos/jccdkct/chronoregatecomite/releases/latest")
+                val connection = url.openConnection() as HttpURLConnection
+                connection.requestMethod = "GET"
+                connection.setRequestProperty("Accept", "application/vnd.github.v3+json")
+                val response = connection.inputStream.bufferedReader().use { it.readText() }
+                // Simple regex to find tag_name, e.g. "tag_name":"v1.2"
+                val regex = "\"tag_name\"\\s*:\\s*\"([^\"]+)\"".toRegex()
+                val match = regex.find(response)
+                val version = match?.groupValues?.get(1)?.replace("v", "")
+                _latestVersion.value = version
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 
     fun updateSavedFilesCount() {
