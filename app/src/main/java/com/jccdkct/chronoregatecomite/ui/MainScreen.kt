@@ -680,54 +680,95 @@ fun ProcedureSelectionDialog(
 
                             Spacer(modifier = Modifier.height(24.dp))
 
-                            // Bandeau 1: Partager
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        val sendIntent = Intent().apply {
-                                            action = Intent.ACTION_SEND
-                                            putExtra(Intent.EXTRA_TEXT, "Chrono Régate Comité - L'app de chronométrage nautique : https://github.com/jccdkct/chronoregatecomite/releases/latest")
-                                            type = "text/plain"
-                                        }
-                                        context.startActivity(Intent.createChooser(sendIntent, null))
-                                    }
-                                    .padding(vertical = 4.dp),
-                                contentAlignment = Alignment.Center
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = "Partager l'application",
-                                    color = Color.DarkGray,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    // Ligne 1: Partager
+                                    Text(
+                                        text = "Partager l'application",
+                                        modifier = Modifier
+                                            .clickable {
+                                                val sendIntent = Intent().apply {
+                                                    action = Intent.ACTION_SEND
+                                                    putExtra(Intent.EXTRA_TEXT, "Chrono Régate Comité - L'app de chronométrage nautique : https://github.com/jccdkct/chronoregatecomite/releases/latest")
+                                                    type = "text/plain"
+                                                }
+                                                context.startActivity(Intent.createChooser(sendIntent, null))
+                                            }
+                                            .padding(vertical = 6.dp),
+                                        color = Color.DarkGray,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold
+                                    )
 
-                            // Bandeau 2: Status & Télécharger
-                            val currentVersion = BuildConfig.VERSION_NAME
-                            val isUpToDate = latestVersion == null || latestVersion == currentVersion
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/jccdkct/chronoregatecomite/releases/latest/download/chronoregatecomite.apk"))
-                                        context.startActivity(intent)
+                                    // Ligne 2: Status & Télécharger
+                                    val currentVersion = BuildConfig.VERSION_NAME
+                                    val isUpToDate = latestVersion == null || latestVersion == currentVersion
+                                    val statusText = if (isUpToDate) {
+                                        "version $currentVersion (à jour) - Télécharger"
+                                    } else {
+                                        "version $currentVersion - Télécharger $latestVersion"
                                     }
-                                    .padding(vertical = 4.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                val statusText = if (isUpToDate) {
-                                    "version $currentVersion installée - Appli à jour"
-                                } else {
-                                    "version $currentVersion installée - Télécharger $latestVersion"
+                                    Text(
+                                        text = statusText,
+                                        modifier = Modifier
+                                            .clickable {
+                                                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/jccdkct/chronoregatecomite/releases/latest")))
+                                            }
+                                            .padding(vertical = 6.dp),
+                                        color = Color.DarkGray,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
+                                    )
                                 }
-                                Text(
-                                    text = statusText,
-                                    color = Color.DarkGray,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
-                                )
+
+                                Column(
+                                    modifier = Modifier.padding(end = 4.dp),
+                                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    // Petit bouton Démo
+                                    Surface(
+                                        modifier = Modifier.clickable { 
+                                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/shorts/z5VRnEkmTFQ"))) 
+                                        },
+                                        shape = MaterialTheme.shapes.extraSmall,
+                                        color = Color.Transparent,
+                                        border = androidx.compose.foundation.BorderStroke(1.dp, Color.DarkGray.copy(alpha = 0.5f))
+                                    ) {
+                                        Text(
+                                            text = "Démo",
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                            color = Color.DarkGray,
+                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+
+                                    // Petit bouton Site
+                                    Surface(
+                                        modifier = Modifier.clickable { 
+                                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/jccdkct/chronoregatecomite"))) 
+                                        },
+                                        shape = MaterialTheme.shapes.extraSmall,
+                                        color = Color.Transparent,
+                                        border = androidx.compose.foundation.BorderStroke(1.dp, Color.DarkGray.copy(alpha = 0.5f))
+                                    ) {
+                                        Text(
+                                            text = "Site",
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                            color = Color.DarkGray,
+                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
                             }
                         }
                 }
@@ -1470,52 +1511,52 @@ fun NonClassifiedCodeDialog(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp),
+                    .padding(8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
                     text = "Code Classement",
-                    style = MaterialTheme.typography.headlineMedium,
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
                 
-                // Result Area (Similar to sail keypad)
+                // Result Area
                 Surface(
-                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    modifier = Modifier.fillMaxWidth().height(44.dp),
                     shape = MaterialTheme.shapes.medium,
                     color = MaterialTheme.colorScheme.surfaceVariant,
                     border = androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Text(text = currentValue, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
+                        Text(text = currentValue, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
                     }
                 }
 
                 Column(
                     modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     // Predefined Codes with Descriptions
                     codes.chunked(3).forEach { row ->
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             row.forEach { (code, desc) ->
                                 Button(
                                     onClick = { currentValue = code },
-                                    modifier = Modifier.weight(1f).height(62.dp),
+                                    modifier = Modifier.weight(1f).height(52.dp),
                                     shape = MaterialTheme.shapes.medium,
                                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF505050)),
                                     contentPadding = PaddingValues(1.dp)
                                 ) {
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text(code, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
+                                        Text(code, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Black)
                                         Text(
                                             text = desc, 
                                             style = MaterialTheme.typography.labelSmall, 
-                                            fontSize = 10.sp, 
+                                            fontSize = 9.sp, 
                                             textAlign = TextAlign.Center, 
-                                            lineHeight = 11.sp,
-                                            maxLines = 2
+                                            lineHeight = 10.sp,
+                                            maxLines = 1
                                         )
                                     }
                                 }
@@ -1523,9 +1564,9 @@ fun NonClassifiedCodeDialog(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(4.dp))
-                    HorizontalDivider(thickness = 1.dp, color = Color.Gray.copy(alpha = 0.5f))
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(2.dp))
+                    HorizontalDivider(thickness = 1.dp, color = Color.Gray.copy(alpha = 0.3f))
+                    Spacer(modifier = Modifier.height(2.dp))
 
                     // Alphabet Keypad
                     val alphabet = ('A'..'Z').map { it.toString() } + listOf(" ", "EFF", "⌫")
@@ -1534,7 +1575,7 @@ fun NonClassifiedCodeDialog(
                             row.forEach { key ->
                                 KeypadButton(
                                     text = key, 
-                                    modifier = Modifier.weight(1f).height(40.dp),
+                                    modifier = Modifier.weight(1f).height(34.dp),
                                     isSmall = true
                                 ) {
                                     when (key) {
@@ -1544,7 +1585,6 @@ fun NonClassifiedCodeDialog(
                                     }
                                 }
                             }
-                            // Fill empty slots in last row if needed
                             if (row.size < 6) {
                                 repeat(6 - row.size) { Spacer(modifier = Modifier.weight(1f)) }
                             }
@@ -1553,11 +1593,11 @@ fun NonClassifiedCodeDialog(
                     }
                 }
 
-                Row(modifier = Modifier.fillMaxWidth().height(60.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = onDismiss, modifier = Modifier.weight(1f).fillMaxHeight(), colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)) {
+                Row(modifier = Modifier.fillMaxWidth().height(50.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = onDismiss, modifier = Modifier.weight(1f).fillMaxHeight(), colors = ButtonDefaults.buttonColors(containerColor = Color.Gray), shape = MaterialTheme.shapes.medium) {
                         Text("Annuler", fontWeight = FontWeight.Bold)
                     }
-                    Button(onClick = { onConfirm(currentValue) }, modifier = Modifier.weight(1f).fillMaxHeight(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF003333))) {
+                    Button(onClick = { onConfirm(currentValue) }, modifier = Modifier.weight(1f).fillMaxHeight(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF003333)), shape = MaterialTheme.shapes.medium) {
                         Text("Valider", fontWeight = FontWeight.Bold)
                     }
                 }
